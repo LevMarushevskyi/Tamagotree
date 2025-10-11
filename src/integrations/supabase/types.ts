@@ -14,7 +14,181 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      neighborhoods: {
+        Row: {
+          created_at: string
+          id: string
+          member_count: number
+          name: string
+          total_xp: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          member_count?: number
+          name: string
+          total_xp?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          member_count?: number
+          name?: string
+          total_xp?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          level: number
+          total_xp: number
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          level?: number
+          total_xp?: number
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          level?: number
+          total_xp?: number
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          photo_url: string | null
+          scheduled_date: string
+          status: string
+          task_type: string
+          tree_id: string
+          user_id: string
+          xp_reward: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          scheduled_date: string
+          status?: string
+          task_type: string
+          tree_id: string
+          user_id: string
+          xp_reward?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          photo_url?: string | null
+          scheduled_date?: string
+          status?: string
+          task_type?: string
+          tree_id?: string
+          user_id?: string
+          xp_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_tree_id_fkey"
+            columns: ["tree_id"]
+            isOneToOne: false
+            referencedRelation: "trees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trees: {
+        Row: {
+          age_days: number
+          created_at: string
+          health_status: string
+          id: string
+          latitude: number
+          longitude: number
+          name: string
+          photo_url: string | null
+          species: string | null
+          updated_at: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          age_days?: number
+          created_at?: string
+          health_status?: string
+          id?: string
+          latitude: number
+          longitude: number
+          name: string
+          photo_url?: string | null
+          species?: string | null
+          updated_at?: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          age_days?: number
+          created_at?: string
+          health_status?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          name?: string
+          photo_url?: string | null
+          species?: string | null
+          updated_at?: string
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
+      user_neighborhoods: {
+        Row: {
+          joined_at: string
+          neighborhood_id: string
+          user_id: string
+        }
+        Insert: {
+          joined_at?: string
+          neighborhood_id: string
+          user_id: string
+        }
+        Update: {
+          joined_at?: string
+          neighborhood_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_neighborhoods_neighborhood_id_fkey"
+            columns: ["neighborhood_id"]
+            isOneToOne: false
+            referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
