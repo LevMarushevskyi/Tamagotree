@@ -1,8 +1,12 @@
-# Welcome to your Lovable project
+# 🌳 Tomagotree
+
+> Fight climate change one tree at a time - A community-driven tree care platform for Durham, NC
+
+**Prevents new-tree death in urban heat islands** with citizen-scheduled watering based on vapor pressure deficit (VPD) and night cooling forecasts.
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/49d24c51-7337-45c0-b38d-efef579a9686
+**Lovable URL**: https://lovable.dev/projects/49d24c51-7337-45c0-b38d-efef579a9686
 
 ## How can I edit this code?
 
@@ -60,14 +64,62 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## 📚 Documentation
+
+- **[Environment Variables Setup](ENV_SETUP.md)** - Configure `.env.local` for development
+- **[Vercel Deployment Guide](VERCEL_DEPLOYMENT.md)** - Complete deployment instructions
+- **[Deployment Checklist](DEPLOYMENT_CHECKLIST.md)** - Step-by-step pre-flight checklist
+
 ## How can I deploy this project?
+
+### Option 1: Vercel (Recommended)
+
+See the **[Vercel Deployment Guide](VERCEL_DEPLOYMENT.md)** for complete instructions.
+
+Quick steps:
+1. Push code to GitHub
+2. Connect repo to Vercel
+3. Add environment variables in Vercel dashboard
+4. Update Supabase redirect URLs
+5. Deploy!
+
+### Option 2: Lovable
 
 Simply open [Lovable](https://lovable.dev/projects/49d24c51-7337-45c0-b38d-efef579a9686) and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
+## Environment Variables
 
-Yes, you can!
+Copy `.env.example` to `.env.local` and fill in your Supabase credentials:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```bash
+cp .env.example .env.local
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+See **[ENV_SETUP.md](ENV_SETUP.md)** for detailed configuration.
+
+## Features
+
+### ✅ Implemented
+- User authentication (sign up/sign in)
+- Tree/sapling reporting with geolocation
+- User dashboard with XP and leveling system
+- Profile page with achievements
+- Basic tree management
+
+### 🚧 Coming Soon
+- Interactive map view with heat zones
+- Photo upload for tree tracking
+- VPD-based watering notifications
+- Neighborhood competition
+- Task scheduling system
+- Mobile app (PWA/Capacitor)
+
+## Tech Stack
+
+- **Frontend**: React 18 + TypeScript
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Backend**: Supabase (Auth, Database, Storage)
+- **Routing**: React Router v6
+- **State**: TanStack Query (React Query)
+- **Deployment**: Vercel
