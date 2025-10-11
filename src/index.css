@@ -8,8 +8,8 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Tomagotree Color Palette - Earthy & Vibrant */
-    --background: 42 45% 97%;
+    /* Tomagotree Color Palette - Retro Earthy & Vibrant */
+    --background: 45 30% 92%;
     --foreground: 28 25% 15%;
 
     --card: 0 0% 100%;
@@ -41,7 +41,11 @@ All colors MUST be HSL.
     --input: 40 15% 85%;
     --ring: 142 71% 45%;
 
-    --radius: 1rem;
+    --radius: 0.25rem;
+
+    /* Retro Fonts */
+    --font-pixel: 'Press Start 2P', cursive;
+    --font-mono: 'VT323', monospace;
 
     /* Custom design tokens */
     --tree-brown: 30 35% 30%;
@@ -56,10 +60,11 @@ All colors MUST be HSL.
     --gradient-sunset: linear-gradient(135deg, hsl(45 100% 60%) 0%, hsl(25 95% 53%) 100%);
     --gradient-hero: linear-gradient(135deg, hsl(142 71% 45%) 0%, hsl(200 85% 55%) 50%, hsl(25 95% 53%) 100%);
     
-    /* Shadows with color */
-    --shadow-soft: 0 4px 20px -2px hsl(142 71% 45% / 0.1);
-    --shadow-glow: 0 0 40px hsl(142 71% 45% / 0.3);
-    --shadow-warm: 0 8px 30px -4px hsl(25 95% 53% / 0.2);
+    /* Retro Pixelated Shadows */
+    --shadow-pixel: 4px 4px 0px hsl(28 25% 15% / 0.3);
+    --shadow-pixel-lg: 6px 6px 0px hsl(28 25% 15% / 0.4);
+    --shadow-inset: inset 2px 2px 4px hsl(0 0% 0% / 0.2);
+    --shadow-glow: 0 0 20px hsl(142 71% 45% / 0.5);
     
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -104,5 +109,39 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    image-rendering: pixelated;
+  }
+
+  .font-pixel {
+    font-family: var(--font-pixel);
+  }
+
+  .font-mono-retro {
+    font-family: var(--font-mono);
+  }
+
+  .retro-border {
+    border: 4px solid hsl(var(--foreground));
+    box-shadow: var(--shadow-pixel);
+  }
+
+  .retro-button {
+    border: 3px solid hsl(var(--foreground));
+    box-shadow: var(--shadow-pixel);
+    transition: all 0.1s ease;
+  }
+
+  .retro-button:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px hsl(var(--foreground) / 0.3);
+  }
+
+  .pixel-corners {
+    clip-path: polygon(
+      0 4px, 4px 4px, 4px 0,
+      calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px,
+      100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%,
+      4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)
+    );
   }
 }
