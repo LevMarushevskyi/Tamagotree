@@ -2,55 +2,57 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Sprout, Award, TreePine, LogOut, Plus, MapPin } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu, User as UserIcon, LogOut, TreePine, MapPin, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { User, Session } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 
 interface Profile {
   username: string;
+  avatar_url: string | null;
   total_xp: number;
   level: number;
 }
 
-interface Tree {
-  id: string;
-  name: string;
-  species: string | null;
-  age_days: number;
-  health_status: string;
-  xp_earned: number;
-  photo_url: string | null;
-}
-
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [trees, setTrees] = useState<Tree[]>([]);
   const [loading, setLoading] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         navigate("/auth");
+      } else {
+        setUser(session.user);
       }
     });
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         navigate("/auth");
+      } else {
+        setUser(session.user);
       }
     });
 
@@ -60,7 +62,6 @@ const Dashboard = () => {
   useEffect(() => {
     if (user) {
       fetchProfile();
-      fetchTrees();
     }
   }, [user]);
 
@@ -70,7 +71,7 @@ const Dashboard = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("username, total_xp, level")
+        .select("username, avatar_url, total_xp, level")
         .eq("id", user.id)
         .single();
 
@@ -83,162 +84,195 @@ const Dashboard = () => {
     }
   };
 
-  const fetchTrees = async () => {
-    if (!user) return;
-
+  const handleSignOut = async () => {
     try {
-      const { data, error } = await supabase
-        .from("trees")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
+      const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      setTrees(data || []);
+
+      toast({
+        title: "Signed out successfully",
+        description: "See you next time, Tree Guardian!",
+      });
+      navigate("/");
     } catch (error: any) {
-      console.error("Error fetching trees:", error);
+      toast({
+        title: "Error signing out",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
-  };
-
-  const xpToNextLevel = profile ? profile.level * 100 : 100;
-  const xpProgress = profile ? (profile.total_xp % 100) : 0;
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Sprout className="w-12 h-12 text-primary animate-pulse" />
+        <TreePine className="w-12 h-12 text-primary animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-primary/5">
-      {/* Header */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sprout className="w-8 h-8 text-primary" />
-            <h1 className="text-2xl font-bold">Tomagotree</h1>
+    <div className="relative h-screen w-screen overflow-hidden">
+      {/* Map Container (Placeholder) */}
+      <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
+        {/* Placeholder for map - will be replaced with actual map component */}
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center space-y-4 p-8 bg-white/80 dark:bg-gray-900/80 rounded-lg shadow-lg backdrop-blur-sm">
+            <MapPin className="w-16 h-16 mx-auto text-primary animate-bounce" />
+            <h2 className="text-2xl font-bold">Interactive Map</h2>
+            <p className="text-muted-foreground max-w-md">
+              The interactive map will be displayed here, showing all trees in the Durham area
+              that you can adopt and care for.
+            </p>
           </div>
-          <Button variant="outline" onClick={handleSignOut} size="sm">
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
         </div>
-      </header>
+      </div>
 
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Profile Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="md:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sprout className="w-5 h-5 text-primary" />
-                Welcome back, {profile?.username}!
-              </CardTitle>
-              <CardDescription>Level {profile?.level} Tree Guardian</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <div className="flex justify-between mb-2 text-sm">
-                  <span>XP Progress</span>
-                  <span className="text-muted-foreground">
-                    {xpProgress} / {xpToNextLevel} XP
-                  </span>
-                </div>
-                <Progress value={(xpProgress / xpToNextLevel) * 100} className="h-3" />
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-4">
-                <div className="text-center p-4 bg-primary/10 rounded-lg">
-                  <Award className="w-6 h-6 mx-auto mb-2 text-primary" />
-                  <div className="text-2xl font-bold">{profile?.total_xp}</div>
-                  <div className="text-sm text-muted-foreground">Total XP</div>
-                </div>
-                <div className="text-center p-4 bg-secondary/10 rounded-lg">
-                  <TreePine className="w-6 h-6 mx-auto mb-2 text-secondary" />
-                  <div className="text-2xl font-bold">{trees.length}</div>
-                  <div className="text-sm text-muted-foreground">Trees Planted</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button onClick={() => navigate("/map")} className="w-full">
-                <MapPin className="w-4 h-4 mr-2" />
-                Report New Tree
+      {/* Top Navigation Bar */}
+      <div className="absolute top-0 left-0 right-0 z-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b shadow-sm">
+        <div className="flex items-center justify-between p-4">
+          {/* Left: Menu Button */}
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="shadow-md">
+                <Menu className="h-5 w-5" />
               </Button>
-              <Button onClick={() => navigate("/profile")} variant="outline" className="w-full">
+            </SheetTrigger>
+            <SheetContent side="left" className="w-80">
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <TreePine className="w-5 h-5 text-primary" />
+                  Tomagotree
+                </SheetTitle>
+                <SheetDescription>
+                  Grow trees, earn XP, save Durham
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="mt-8 space-y-4">
+                {/* User Info */}
+                {profile && (
+                  <div className="p-4 bg-primary/5 rounded-lg">
+                    <p className="font-semibold">{profile.username}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Level {profile.level} • {profile.total_xp} XP
+                    </p>
+                  </div>
+                )}
+
+                {/* Menu Items */}
+                <nav className="space-y-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      navigate("/dashboard");
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <MapPin className="mr-2 h-4 w-4" />
+                    Map View
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      navigate("/map");
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <TreePine className="mr-2 h-4 w-4" />
+                    Report a Tree
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      navigate("/profile");
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    Profile & Settings
+                  </Button>
+                </nav>
+
+                {/* Sign Out */}
+                <div className="pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-destructive hover:text-destructive"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Center: Title */}
+          <div className="flex items-center gap-2">
+            <TreePine className="w-6 h-6 text-primary" />
+            <h1 className="text-xl font-bold">Tomagotree</h1>
+          </div>
+
+          {/* Right: Profile Picture */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="rounded-full shadow-md">
+                {profile?.avatar_url ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt={profile.username}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <UserIcon className="h-5 w-5" />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium">{profile?.username}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Level {profile?.level} • {profile?.total_xp} XP
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/profile")}>
+                <UserIcon className="mr-2 h-4 w-4" />
                 View Profile
-              </Button>
-            </CardContent>
-          </Card>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/profile")}>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+      </div>
 
-        {/* Trees Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Your Trees</CardTitle>
-                <CardDescription>Monitor and care for your saplings</CardDescription>
-              </div>
-              <Button onClick={() => navigate("/map")} size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Tree
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {trees.length === 0 ? (
-              <div className="text-center py-12">
-                <TreePine className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">No trees yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Start your journey by reporting your first sapling!
-                </p>
-                <Button onClick={() => navigate("/map")}>
-                  <MapPin className="w-4 h-4 mr-2" />
-                  Report Your First Tree
-                </Button>
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {trees.map((tree) => (
-                  <Card key={tree.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                      {tree.photo_url ? (
-                        <img src={tree.photo_url} alt={tree.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <TreePine className="w-16 h-16 text-primary/40" />
-                      )}
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-semibold text-lg mb-1">{tree.name}</h3>
-                      {tree.species && (
-                        <p className="text-sm text-muted-foreground mb-2">{tree.species}</p>
-                      )}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">{tree.age_days} days old</span>
-                        <span className="font-medium text-primary">+{tree.xp_earned} XP</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+      {/* Floating Action Button - Report Tree */}
+      <div className="absolute bottom-6 right-6 z-10">
+        <Button
+          size="lg"
+          className="rounded-full shadow-lg h-14 w-14 p-0"
+          onClick={() => navigate("/map")}
+        >
+          <TreePine className="h-6 w-6" />
+        </Button>
+      </div>
     </div>
   );
 };
