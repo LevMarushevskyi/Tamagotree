@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { X, Move } from "lucide-react";
@@ -41,6 +41,24 @@ export const TreePhotoWithDecorations = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [pendingPosition, setPendingPosition] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced save function to save positions while dragging
+  const savePosition = useCallback(async (decorationId: string, x: number, y: number) => {
+    try {
+      const { error } = await supabase
+        .from("tree_decorations")
+        .update({
+          position_x: Math.round(x),
+          position_y: Math.round(y),
+        })
+        .eq("id", decorationId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error saving decoration position:", error);
+    }
+  }, []);
 
   const handleMouseDown = (e: React.MouseEvent, decoration: PlacedDecoration) => {
     if (!isOwner) return;
@@ -78,35 +96,32 @@ export const TreePhotoWithDecorations = ({
     if (decoration && onDecorationMove) {
       onDecorationMove(draggingId, percentX, percentY);
     }
+
+    // Debounced save - save after 200ms of no movement
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      savePosition(draggingId, percentX, percentY);
+    }, 200);
   };
 
   const handleMouseUp = async () => {
     if (!draggingId || !pendingPosition) return;
 
-    try {
-      // Save position to database using the pending position values
-      const { error } = await supabase
-        .from("tree_decorations")
-        .update({
-          position_x: Math.round(pendingPosition.x),
-          position_y: Math.round(pendingPosition.y),
-        })
-        .eq("id", draggingId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Position Saved",
-        description: "Decoration position updated!",
-      });
-    } catch (error) {
-      console.error("Error saving decoration position:", error);
-      toast({
-        title: "Save Failed",
-        description: "Could not save decoration position.",
-        variant: "destructive",
-      });
+    // Clear any pending debounced saves
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
     }
+
+    // Perform final save immediately
+    await savePosition(draggingId, pendingPosition.x, pendingPosition.y);
+
+    toast({
+      title: "Position Saved",
+      description: "Decoration position updated!",
+    });
 
     setDraggingId(null);
     setPendingPosition(null);
@@ -148,6 +163,14 @@ export const TreePhotoWithDecorations = ({
     if (decoration && onDecorationMove) {
       onDecorationMove(draggingId, percentX, percentY);
     }
+
+    // Debounced save for touch as well
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      savePosition(draggingId, percentX, percentY);
+    }, 200);
   };
 
   return (
