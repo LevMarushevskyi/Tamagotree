@@ -1268,28 +1268,6 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {/* Impact Section */}
-          <Card className="bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary/20">
-            <CardHeader>
-              <CardTitle>Your Environmental Impact</CardTitle>
-              <CardDescription>Together we're making Durham greener</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span>Trees Planted</span>
-                <span className="text-2xl font-bold text-primary">{treeCount}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>CO₂ Offset (estimated)</span>
-                <span className="text-2xl font-bold text-secondary">{(treeCount * 20).toFixed(0)} kg</span>
-              </div>
-              <p className="text-sm text-muted-foreground pt-4">
-                Each tree you care for contributes to cooling Durham's urban heat islands and
-                fighting climate change. Keep up the amazing work! 🌱
-              </p>
-            </CardContent>
-          </Card>
-
           {/* User Settings */}
           <Card>
             <CardHeader>
