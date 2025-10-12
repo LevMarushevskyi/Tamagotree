@@ -10,6 +10,7 @@ import Map from "./pages/Map";
 import Profile from "./pages/Profile";
 import Leaderboards from "./pages/Leaderboards";
 import Friends from "./pages/Friends";
+import Shop from "./pages/Shop";
 import ResetPassword from "./pages/ResetPassword";
 import TreeDetail from "./pages/TreeDetail";
 import TreeEdit from "./pages/TreeEdit";
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/leaderboards" element={<Leaderboards />} />
           <Route path="/friends" element={<Friends />} />
+          <Route path="/shop" element={<Shop />} />
           <Route path="/tree/:treeId" element={<TreeDetail />} />
           <Route path="/tree/:treeId/edit" element={<TreeEdit />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

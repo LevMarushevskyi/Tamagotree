@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { User as UserIcon, TreePine, Trophy, Users } from "lucide-react";
+import { User as UserIcon, TreePine, Trophy, Users, ShoppingBag } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import MapView from "@/components/map/MapView";
 
@@ -93,7 +93,17 @@ const Dashboard = () => {
               variant="outline"
               size="icon"
               className="rounded-full shadow-md relative z-[1001]"
+              onClick={() => navigate("/shop")}
+              title="Shop"
+            >
+              <ShoppingBag className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full shadow-md relative z-[1001]"
               onClick={() => navigate("/friends")}
+              title="Friends"
             >
               <Users className="h-5 w-5" />
             </Button>
@@ -102,6 +112,7 @@ const Dashboard = () => {
               size="icon"
               className="rounded-full shadow-md relative z-[1001]"
               onClick={() => navigate("/leaderboards")}
+              title="Leaderboards"
             >
               <Trophy className="h-5 w-5" />
             </Button>

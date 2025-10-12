@@ -40,6 +40,7 @@ import type { User } from "@supabase/supabase-js";
 import { checkLevelUp, calculateLevelProgress } from "@/utils/xpCalculations";
 import { calculateTreeAgeDays } from "@/utils/ageCalculations";
 import { FriendTaskRequest } from "@/components/FriendTaskRequest";
+import { TreeDecorations } from "@/components/TreeDecorations";
 
 interface Tree {
   name: string;
@@ -1056,6 +1057,13 @@ const TreeDetail = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Decorations Section */}
+          <TreeDecorations
+            treeId={treeId!}
+            isOwner={isOwner}
+            userId={currentUser?.id || null}
+          />
         </div>
       </main>
 
