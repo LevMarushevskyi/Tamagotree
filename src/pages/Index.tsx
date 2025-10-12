@@ -103,7 +103,7 @@ const Index = () => {
       <footer className="border-t-4 border-foreground bg-card py-8">
         <div className="container mx-auto px-4 text-center">
           
-          <p className="font-mono-retro text-sm text-muted-foreground mt-2">MADE WITH ♥ FOR TH</p>
+          <p className="font-mono-retro text-sm text-muted-foreground mt-2">MADE WITH ♥ FOR</p>
         </div>
       </footer>
     </div>;
