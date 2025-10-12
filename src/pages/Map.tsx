@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Camera, MapPin, Sprout } from "lucide-react";
+import { ArrowLeft, Camera, MapPin, Sprout, X, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import { validateTreeName, MAX_TREE_NAME_LENGTH } from "@/utils/nameValidation";
@@ -19,6 +19,9 @@ const Map = () => {
   const [longitude, setLongitude] = useState("");
   const [wantToAdopt, setWantToAdopt] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -52,6 +55,48 @@ const Map = () => {
     }
   };
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const file = e.target.files[0];
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload a valid image file (JPEG, PNG, GIF, or WebP)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setPhotoFile(file);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -70,6 +115,29 @@ const Map = () => {
     setLoading(true);
 
     try {
+      let photoUrl: string | null = null;
+
+      // Upload photo if provided
+      if (photoFile) {
+        setIsUploadingPhoto(true);
+        const fileExt = photoFile.name.split(".").pop();
+        const filePath = `${user.id}/tree-${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("tree-photos")
+          .upload(filePath, photoFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from("tree-photos")
+          .getPublicUrl(filePath);
+
+        photoUrl = publicUrl;
+        setIsUploadingPhoto(false);
+      }
+
       const { error } = await supabase.from("trees").insert({
         user_id: wantToAdopt ? user.id : null,
         name: treeName.trim(),
@@ -81,6 +149,7 @@ const Map = () => {
         health_percentage: 100,
         level: 1,
         xp_earned: 0,
+        photo_url: photoUrl,
       });
 
       if (error) throw error;
@@ -101,6 +170,7 @@ const Map = () => {
       });
     } finally {
       setLoading(false);
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -197,6 +267,59 @@ const Map = () => {
                 </Button>
 
                 <div className="space-y-4">
+                  {/* Photo Upload Section */}
+                  <div className="space-y-2">
+                    <Label htmlFor="tree-photo">Tree Photo (Optional)</Label>
+                    {photoPreview ? (
+                      <div className="relative">
+                        <img
+                          src={photoPreview}
+                          alt="Tree preview"
+                          className="w-full h-48 object-cover rounded-lg border-2 border-primary/20"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={removePhoto}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                        <label htmlFor="tree-photo" className="cursor-pointer">
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                              <Camera className="w-6 h-6 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">Upload a photo of your tree</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                JPEG, PNG, GIF, or WebP (max 5MB)
+                              </p>
+                            </div>
+                          </div>
+                          <Input
+                            id="tree-photo"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handlePhotoChange}
+                            disabled={loading || isUploadingPhoto}
+                          />
+                        </label>
+                      </div>
+                    )}
+                    {isUploadingPhoto && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Camera className="w-4 h-4 animate-pulse" />
+                        Uploading photo...
+                      </p>
+                    )}
+                  </div>
+
                   <div className="flex items-start space-x-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
                     <Checkbox
                       id="adopt-tree"
@@ -215,19 +338,6 @@ const Map = () => {
                         By adopting this tree, you'll be responsible for its care and earn XP for completing tasks.
                         If unchecked, the tree will be available for others to adopt on the map.
                       </p>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-muted rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <Camera className="w-5 h-5 text-muted-foreground mt-0.5" />
-                      <div className="text-sm text-muted-foreground">
-                        <p className="font-medium mb-1">Photo Upload (Coming Soon)</p>
-                        <p>
-                          Snap a photo of your tree to track its growth over time. This feature
-                          will be available in the next update!
-                        </p>
-                      </div>
                     </div>
                   </div>
                 </div>
