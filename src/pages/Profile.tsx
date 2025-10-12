@@ -23,6 +23,7 @@ import {
 import { ArrowLeft, Award, TreePine, Trophy, Sprout, Star, Trash2, Settings as SettingsIcon, Eye, Moon, Sun, Volume2, VolumeX, Edit as EditIcon, Camera, Save, X, LogOut, Coins } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
+import { checkLevelUp, calculateLevelProgress } from "@/utils/xpCalculations";
 
 interface Profile {
   username: string;
@@ -586,24 +587,36 @@ const Profile = () => {
       // Update user profile
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("acorns, total_xp")
+        .select("acorns, total_xp, level")
         .eq("id", user.id)
         .single();
 
       if (profileData) {
+        const newTotalXP = profileData.total_xp + xpReward;
+        const levelUpInfo = checkLevelUp(profileData.total_xp, newTotalXP);
+
         await supabase
           .from("profiles")
           .update({
             acorns: profileData.acorns + acornReward,
-            total_xp: profileData.total_xp + xpReward,
+            total_xp: newTotalXP,
+            level: levelUpInfo.newLevel,
           })
           .eq("id", user.id);
-      }
 
-      toast({
-        title: "Weekly Quest Completed!",
-        description: `${quest.name} completed! You earned ${acornReward} acorns and ${xpReward} XP!`,
-      });
+        // Show level up notification if leveled up
+        if (levelUpInfo.leveledUp) {
+          toast({
+            title: "🎉 Level Up!",
+            description: `You reached level ${levelUpInfo.newLevel}! Quest completed: ${quest.name}`,
+          });
+        } else {
+          toast({
+            title: "Weekly Quest Completed!",
+            description: `${quest.name} completed! You earned ${acornReward} acorns and ${xpReward} XP!`,
+          });
+        }
+      }
     } catch (error) {
       console.error("Error auto-completing weekly quest:", error);
     }
@@ -777,8 +790,10 @@ const Profile = () => {
     }
   };
 
-  const xpToNextLevel = profile ? profile.level * 100 : 100;
-  const xpProgress = profile ? (profile.total_xp % 100) : 0;
+  // Calculate level progress using the scaling formula
+  const levelProgress = profile ? calculateLevelProgress(profile.total_xp) : { level: 1, current: 0, required: 100 };
+  const xpToNextLevel = levelProgress.required;
+  const xpProgress = levelProgress.current;
   const memberSince = profile ? new Date(profile.created_at).toLocaleDateString() : "";
 
   if (loading) {

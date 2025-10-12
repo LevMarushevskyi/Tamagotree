@@ -36,6 +36,7 @@ import {
 import { ArrowLeft, TreePine, MapPin, Heart, Star, Sprout, Clock, Edit, Trash2, User as UserIcon, Target, Flag, Camera, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
+import { checkLevelUp } from "@/utils/xpCalculations";
 
 interface Tree {
   name: string;
@@ -379,31 +380,42 @@ const TreeDetail = () => {
       const bpReward = quest.bp_reward || 0;
       const xpReward = quest.xp_reward || 0;
 
-      // Update user profile (acorns and XP)
+      // Update user profile (acorns and XP) with level up detection
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("acorns, total_xp")
+        .select("acorns, total_xp, level")
         .eq("id", currentUser.id)
         .single();
 
+      let playerLeveledUp = false;
+      let newPlayerLevel = 0;
+
       if (profileData) {
+        const newTotalXP = profileData.total_xp + xpReward;
+        const playerLevelUpInfo = checkLevelUp(profileData.total_xp, newTotalXP);
+        playerLeveledUp = playerLevelUpInfo.leveledUp;
+        newPlayerLevel = playerLevelUpInfo.newLevel;
+
         await supabase
           .from("profiles")
           .update({
             acorns: profileData.acorns + acornReward,
-            total_xp: profileData.total_xp + xpReward,
+            total_xp: newTotalXP,
+            level: playerLevelUpInfo.newLevel,
           })
           .eq("id", currentUser.id);
       }
 
-      // Update tree (BP and health)
+      // Update tree (BP and health) with level up detection
       const newTreeXp = tree.xp_earned + bpReward;
       const newHealth = Math.min(100, tree.health_percentage + 10); // Boost health by 10%
+      const treeLevelUpInfo = checkLevelUp(tree.xp_earned, newTreeXp);
 
       const { error: treeError } = await supabase
         .from("tree")
         .update({
           xp_earned: newTreeXp,
+          level: treeLevelUpInfo.newLevel,
           health_percentage: newHealth,
           health_status: newHealth >= 70 ? "healthy" : newHealth >= 40 ? "needs_care" : "critical",
         })
@@ -415,6 +427,7 @@ const TreeDetail = () => {
       setTree({
         ...tree,
         xp_earned: newTreeXp,
+        level: treeLevelUpInfo.newLevel,
         health_percentage: newHealth,
         health_status: newHealth >= 70 ? "healthy" : newHealth >= 40 ? "needs_care" : "critical",
       });
@@ -425,10 +438,28 @@ const TreeDetail = () => {
       // Close dialog
       closeQuestDialog();
 
-      toast({
-        title: "Quest Completed!",
-        description: `You earned ${acornReward} acorns, ${bpReward} BP, and ${xpReward} XP!${photoUrl ? " Photo uploaded successfully!" : ""}`,
-      });
+      // Show appropriate toast message
+      if (playerLeveledUp && treeLevelUpInfo.leveledUp) {
+        toast({
+          title: "🎉 Double Level Up!",
+          description: `You reached level ${newPlayerLevel} and ${tree.name} reached level ${treeLevelUpInfo.newLevel}!`,
+        });
+      } else if (playerLeveledUp) {
+        toast({
+          title: "🎉 Level Up!",
+          description: `You reached level ${newPlayerLevel}! Quest completed.`,
+        });
+      } else if (treeLevelUpInfo.leveledUp) {
+        toast({
+          title: "🌳 Tree Level Up!",
+          description: `${tree.name} reached level ${treeLevelUpInfo.newLevel}!`,
+        });
+      } else {
+        toast({
+          title: "Quest Completed!",
+          description: `You earned ${acornReward} acorns, ${bpReward} BP, and ${xpReward} XP!${photoUrl ? " Photo uploaded!" : ""}`,
+        });
+      }
     } catch (error) {
       console.error("Error completing quest:", error);
       toast({
