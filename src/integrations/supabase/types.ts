@@ -107,6 +107,48 @@ export type Database = {
         }
         Relationships: []
       }
+      quests: {
+        Row: {
+          acorn_reward: number | null
+          bp_reward: number | null
+          category: string | null
+          created_at: string
+          description: string
+          icon: string | null
+          id: string
+          name: string
+          quest_type: string
+          tree_specific: boolean | null
+          xp_reward: number | null
+        }
+        Insert: {
+          acorn_reward?: number | null
+          bp_reward?: number | null
+          category?: string | null
+          created_at?: string
+          description: string
+          icon?: string | null
+          id?: string
+          name: string
+          quest_type: string
+          tree_specific?: boolean | null
+          xp_reward?: number | null
+        }
+        Update: {
+          acorn_reward?: number | null
+          bp_reward?: number | null
+          category?: string | null
+          created_at?: string
+          description?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          quest_type?: string
+          tree_specific?: boolean | null
+          xp_reward?: number | null
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           completed_at: string | null
@@ -157,57 +199,6 @@ export type Database = {
           },
         ]
       }
-      tree_graveyard: {
-        Row: {
-          cause_of_death: string | null
-          created_at: string
-          days_lived: number
-          died_at: string
-          id: string
-          latitude: number
-          longitude: number
-          name: string
-          notes: string | null
-          original_tree_id: string | null
-          photo_url: string | null
-          planted_at: string
-          species: string | null
-          user_id: string
-        }
-        Insert: {
-          cause_of_death?: string | null
-          created_at?: string
-          days_lived: number
-          died_at?: string
-          id?: string
-          latitude: number
-          longitude: number
-          name: string
-          notes?: string | null
-          original_tree_id?: string | null
-          photo_url?: string | null
-          planted_at: string
-          species?: string | null
-          user_id: string
-        }
-        Update: {
-          cause_of_death?: string | null
-          created_at?: string
-          days_lived?: number
-          died_at?: string
-          id?: string
-          latitude?: number
-          longitude?: number
-          name?: string
-          notes?: string | null
-          original_tree_id?: string | null
-          photo_url?: string | null
-          planted_at?: string
-          species?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       tree: {
         Row: {
           age_days: number
@@ -256,6 +247,57 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           xp_earned?: number
+        }
+        Relationships: []
+      }
+      tree_graveyard: {
+        Row: {
+          cause_of_death: string | null
+          created_at: string
+          days_lived: number
+          died_at: string
+          id: string
+          latitude: number
+          longitude: number
+          name: string
+          notes: string | null
+          original_tree_id: string | null
+          photo_url: string | null
+          planted_at: string
+          species: string | null
+          user_id: string
+        }
+        Insert: {
+          cause_of_death?: string | null
+          created_at?: string
+          days_lived: number
+          died_at?: string
+          id?: string
+          latitude: number
+          longitude: number
+          name: string
+          notes?: string | null
+          original_tree_id?: string | null
+          photo_url?: string | null
+          planted_at: string
+          species?: string | null
+          user_id: string
+        }
+        Update: {
+          cause_of_death?: string | null
+          created_at?: string
+          days_lived?: number
+          died_at?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          name?: string
+          notes?: string | null
+          original_tree_id?: string | null
+          photo_url?: string | null
+          planted_at?: string
+          species?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -351,6 +393,57 @@ export type Database = {
             columns: ["neighborhood_id"]
             isOneToOne: false
             referencedRelation: "neighborhoods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_quests: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          last_reset_at: string
+          progress: number | null
+          quest_id: string
+          tree_id: string | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_reset_at?: string
+          progress?: number | null
+          quest_id: string
+          tree_id?: string | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_reset_at?: string
+          progress?: number | null
+          quest_id?: string
+          tree_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quests_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_quests_tree_id_fkey"
+            columns: ["tree_id"]
+            isOneToOne: false
+            referencedRelation: "tree"
             referencedColumns: ["id"]
           },
         ]
