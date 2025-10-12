@@ -368,6 +368,9 @@ See the **[Vercel Deployment Guide](VERCEL_DEPLOYMENT.md)** for complete instruc
 #### Claude Code
 **[Claude Code by Anthropic](https://claude.com/claude-code)** - The entire Tomagotree application was built with the assistance of Claude Code, an AI-powered development assistant.
 
+#### Loveable
+**[Lovable](https://lovable.dev/)** - Chatbot used to biuld the file structure and begning of front end, an AI-powered development assistant.
+
 ### Backend Infrastructure
 
 #### Supabase
