@@ -242,6 +242,19 @@ const TreeDetail = () => {
             </div>
           </div>
 
+          {/* Photo Section */}
+          {tree.photo_url && (
+            <Card>
+              <CardContent className="pt-6">
+                <img
+                  src={tree.photo_url}
+                  alt={tree.name}
+                  className="w-full h-auto max-h-96 object-cover rounded-lg shadow-lg"
+                />
+              </CardContent>
+            </Card>
+          )}
+
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
@@ -367,23 +380,6 @@ const TreeDetail = () => {
               </div>
             </CardContent>
           </Card>
-
-          {/* Photo Section */}
-          {tree.photo_url && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Photo</CardTitle>
-                <CardDescription>Latest photo of this tree</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <img
-                  src={tree.photo_url}
-                  alt={tree.name}
-                  className="w-full h-auto rounded-lg shadow-lg"
-                />
-              </CardContent>
-            </Card>
-          )}
         </div>
       </main>
     </div>
