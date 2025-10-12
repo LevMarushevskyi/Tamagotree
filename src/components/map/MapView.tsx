@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
 import { Icon, LatLngExpression } from "leaflet";
+import { supabase } from "@/integrations/supabase/client";
 import "leaflet/dist/leaflet.css";
 
 // Fix for default marker icons in react-leaflet
@@ -15,6 +16,35 @@ Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   shadowUrl: markerShadow,
 });
+
+// Custom tree icon
+const treeIcon = new Icon({
+  iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 13v8"/>
+      <path d="M12 3v3"/>
+      <path d="m9 18 3 3 3-3"/>
+      <path d="M8 10a4 4 0 0 1 8 0c0 2.21-1.79 4-4 4s-4-1.79-4-4z"/>
+      <path d="M6 6a6 6 0 0 1 12 0c0 3.31-2.69 6-6 6s-6-2.69-6-6z"/>
+    </svg>
+  `),
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+  popupAnchor: [0, -32],
+});
+
+interface Tree {
+  id: string;
+  name: string;
+  species: string | null;
+  latitude: number;
+  longitude: number;
+  health_status: string;
+  photo_url: string | null;
+  xp_earned: number;
+  age_days: number;
+  created_at: string;
+}
 
 interface MapViewProps {
   onLocationUpdate?: (lat: number, lng: number) => void;
@@ -35,10 +65,30 @@ const MapView = ({ onLocationUpdate }: MapViewProps) => {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [trees, setTrees] = useState<Tree[]>([]);
 
   // Durham, NC default coordinates
   const defaultCenter: [number, number] = [35.9940, -78.8986];
   const mapCenter = userLocation || defaultCenter;
+
+  // Fetch all trees from database
+  useEffect(() => {
+    const fetchTrees = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("trees")
+          .select("id, name, species, latitude, longitude, health_status, photo_url, xp_earned, age_days, created_at")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setTrees(data || []);
+      } catch (error) {
+        console.error("Error fetching trees:", error);
+      }
+    };
+
+    fetchTrees();
+  }, []);
 
   useEffect(() => {
     // Request user's location
@@ -90,6 +140,38 @@ const MapView = ({ onLocationUpdate }: MapViewProps) => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           noWrap={true}
         />
+
+        {/* Tree Markers */}
+        {trees.map((tree) => (
+          <Marker
+            key={tree.id}
+            position={[Number(tree.latitude), Number(tree.longitude)]}
+            icon={treeIcon}
+          >
+            <Popup>
+              <div className="min-w-[200px]">
+                <h3 className="font-bold text-lg mb-2">{tree.name}</h3>
+                {tree.species && (
+                  <p className="text-sm text-muted-foreground mb-1">
+                    <span className="font-semibold">Species:</span> {tree.species}
+                  </p>
+                )}
+                <p className="text-sm text-muted-foreground mb-1">
+                  <span className="font-semibold">Health:</span>{" "}
+                  <span className={tree.health_status === "healthy" ? "text-green-600" : "text-yellow-600"}>
+                    {tree.health_status}
+                  </span>
+                </p>
+                <p className="text-sm text-muted-foreground mb-1">
+                  <span className="font-semibold">Age:</span> {tree.age_days} days
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <span className="font-semibold">XP:</span> {tree.xp_earned}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
 
         {/* User Location Marker and Circle */}
         {userLocation && (
