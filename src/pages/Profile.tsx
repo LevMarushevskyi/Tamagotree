@@ -604,6 +604,14 @@ const Profile = () => {
           })
           .eq("id", user.id);
 
+        // Update local profile state to reflect new values
+        setProfile((prev) => prev ? {
+          ...prev,
+          acorns: profileData.acorns + acornReward,
+          total_xp: newTotalXP,
+          level: levelUpInfo.newLevel,
+        } : prev);
+
         // Show level up notification if leveled up
         if (levelUpInfo.leveledUp) {
           toast({
