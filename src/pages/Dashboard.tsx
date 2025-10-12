@@ -85,7 +85,7 @@ const Dashboard = () => {
       </div>
 
       {/* Top Navigation Bar */}
-      <div className="absolute top-0 left-0 right-0 z-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b shadow-sm">
+      <div className="absolute top-0 left-0 right-0 z-[1000] bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b shadow-sm">
         <div className="flex items-center justify-between p-4">
           {/* Left: Empty space for balance */}
           <div className="w-10"></div>
@@ -100,7 +100,7 @@ const Dashboard = () => {
           <Button
             variant="outline"
             size="icon"
-            className="rounded-full shadow-md"
+            className="rounded-full shadow-md relative z-[1001]"
             onClick={() => navigate("/profile")}
           >
             {profile?.avatar_url ? (
@@ -117,10 +117,10 @@ const Dashboard = () => {
       </div>
 
       {/* Floating Action Button - Report Tree */}
-      <div className="absolute bottom-6 right-6 z-10">
+      <div className="absolute bottom-6 right-6 z-[1000]">
         <Button
           size="lg"
-          className="rounded-full shadow-lg h-14 w-14 p-0"
+          className="rounded-full shadow-lg h-14 w-14 p-0 relative z-[1001]"
           onClick={() => navigate("/map")}
         >
           <TreePine className="h-6 w-6" />
