@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { User as UserIcon, TreePine } from "lucide-react";
+import { User as UserIcon, TreePine, Trophy } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import MapView from "@/components/map/MapView";
 
@@ -87,8 +87,15 @@ const Dashboard = () => {
       {/* Top Navigation Bar */}
       <div className="absolute top-0 left-0 right-0 z-[1000] bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b shadow-sm">
         <div className="flex items-center justify-between p-4">
-          {/* Left: Empty space for balance */}
-          <div className="w-10"></div>
+          {/* Left: Leaderboards Button */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full shadow-md relative z-[1001]"
+            onClick={() => navigate("/leaderboards")}
+          >
+            <Trophy className="h-5 w-5" />
+          </Button>
 
           {/* Center: Title */}
           <div className="flex items-center gap-2">
