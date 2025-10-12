@@ -220,8 +220,17 @@ const TreeDetail = () => {
 
       // Call edge function to create GitHub issue
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("Session exists:", !!session);
+
       if (session) {
         try {
+          console.log("Calling edge function with data:", {
+            tree_id: treeId,
+            tree_name: tree.name,
+            reason: reportReason,
+            reporter_username: profileData?.username || "Unknown",
+          });
+
           const response = await supabase.functions.invoke("create-tree-report-issue", {
             body: {
               tree_id: treeId,
@@ -236,16 +245,20 @@ const TreeDetail = () => {
             },
           });
 
+          console.log("Edge function response:", response);
+
           if (response.error) {
             console.error("Failed to create GitHub issue:", response.error);
             // Don't fail the whole operation if GitHub issue creation fails
           } else {
-            console.log("GitHub issue created:", response.data);
+            console.log("GitHub issue created successfully:", response.data);
           }
         } catch (githubError) {
           console.error("Error calling edge function:", githubError);
           // Continue even if GitHub issue creation fails
         }
+      } else {
+        console.warn("No session found, skipping GitHub issue creation");
       }
 
       toast({

@@ -20,7 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Award, TreePine, Trophy, Sprout, Star, Trash2, Settings as SettingsIcon, Eye, Moon, Sun, Volume2, VolumeX, Edit as EditIcon, Camera, Save, X, LogOut } from "lucide-react";
+import { ArrowLeft, Award, TreePine, Trophy, Sprout, Star, Trash2, Settings as SettingsIcon, Eye, Moon, Sun, Volume2, VolumeX, Edit as EditIcon, Camera, Save, X, LogOut, Coins } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 
@@ -31,6 +31,7 @@ interface Profile {
   total_xp: number;
   level: number;
   guardian_rank: string;
+  acorns: number;
   created_at: string;
 }
 
@@ -181,7 +182,7 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("username, avatar_url, bio, total_xp, level, guardian_rank, created_at")
+        .select("username, avatar_url, bio, total_xp, level, guardian_rank, acorns, created_at")
         .eq("id", user.id)
         .single();
 
@@ -598,6 +599,18 @@ const Profile = () => {
                 <div className="flex items-center gap-3">
                   <Trophy className="w-8 h-8 text-accent" />
                   <div className="text-3xl font-bold">{profile?.total_xp}</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardDescription>Acorns</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3">
+                  <Coins className="w-8 h-8 text-amber-600" />
+                  <div className="text-3xl font-bold">{profile?.acorns || 0}</div>
                 </div>
               </CardContent>
             </Card>
