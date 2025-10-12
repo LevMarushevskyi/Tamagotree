@@ -883,7 +883,7 @@ const TreeDetail = () => {
                 <TreePhotoWithDecorations
                   photoUrl={tree.photo_url}
                   treeName={tree.name}
-                  placedDecorations={placedDecorations}
+                  placedDecorations={tree.user_id ? placedDecorations : []}
                   isOwner={isOwner}
                   onDecorationMove={handleDecorationMove}
                   onDecorationRemove={handleDecorationRemove}
@@ -1119,13 +1119,15 @@ const TreeDetail = () => {
             </Card>
           )}
 
-          {/* Decorations Section */}
-          <TreeDecorations
-            treeId={treeId!}
-            isOwner={isOwner}
-            userId={currentUser?.id || null}
-            onDecorationsChange={fetchDecorations}
-          />
+          {/* Decorations Section - Only show for adopted trees */}
+          {tree.user_id && (
+            <TreeDecorations
+              treeId={treeId!}
+              isOwner={isOwner}
+              userId={currentUser?.id || null}
+              onDecorationsChange={fetchDecorations}
+            />
+          )}
         </div>
       </main>
 
