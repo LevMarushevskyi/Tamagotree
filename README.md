@@ -10,6 +10,146 @@
 
 ---
 
+## 💡 Inspiration
+
+Urban heat islands are killing newly planted trees in cities across America. In Durham, NC, we saw a critical gap: communities plant trees with good intentions, but without ongoing care, many die within their first year. We were inspired to create a solution that combines technology, gamification, and community action to solve this problem. By making tree care fun and rewarding, we can mobilize citizens to become active guardians of their urban forest, fighting climate change one tree at a time.
+
+## 🌳 What it does
+
+Tomagotree is a gamified tree care platform that turns urban tree maintenance into an engaging community experience. Users can:
+- **Discover and adopt** real trees in their neighborhood through an interactive map
+- **Complete daily quests** (watering, singing, leaf cleanup) with photo verification
+- **Earn rewards** (Acorns, XP, Branch Points) for consistent tree care
+- **Customize trees** with decorations purchased from the shop
+- **Connect with friends** to collaborate on tree care tasks
+- **Track progress** through achievements, levels, and leaderboards
+- **Combat urban heat** by ensuring consistent care for vulnerable new trees
+
+The app uses real environmental data (vapor pressure deficit, temperature forecasts) to schedule watering when trees need it most, preventing the all-too-common fate of dying from neglect in their critical first year.
+
+## 🛠️ How we built it
+
+We built Tomagotree using a modern full-stack approach with **Claude Code** as our primary development assistant:
+
+**Frontend:**
+- React 18 with TypeScript for type-safe component development
+- Vite for lightning-fast build times and hot module replacement
+- Tailwind CSS + shadcn/ui for beautiful, accessible UI components
+- Leaflet + OpenStreetMap for interactive mapping
+- React Query for efficient data fetching and caching
+
+**Backend:**
+- Supabase as our Backend-as-a-Service platform
+- PostgreSQL with Row Level Security for secure data access
+- Supabase Auth for user authentication
+- Supabase Storage for tree photo uploads
+- Real-time subscriptions for live updates
+
+**Development Workflow:**
+- Claude Code for AI-assisted development, debugging, and feature implementation
+- Supabase MCP Server for direct database operations and migrations
+- Vercel MCP Server for deployment management
+- Git for version control and collaboration
+
+**Key Technical Decisions:**
+- Percentage-based decoration positioning for responsive layouts
+- Debounced auto-save (200ms) to reduce database calls
+- Dynamic age calculation from timestamps instead of stored values
+- Quest system with 18-hour reset cycles to encourage daily engagement
+
+## 🚧 Challenges we ran into
+
+1. **Decoration Position Persistence** - Our biggest challenge was getting decoration positions to save reliably. Initially, decorations would reset to (0,0) on page reload. After multiple debugging attempts, we discovered the root cause: missing UPDATE policies in Row Level Security. This taught us the importance of thorough RLS policy coverage.
+
+2. **Age Calculation Architecture** - We initially tried storing tree age as a static database column, but keeping it updated proved complex. We pivoted to dynamic calculation from the `created_at` timestamp, which eliminated the need for cron jobs or triggers.
+
+3. **Quest Timing Logic** - Designing a quest system that resets every 18 hours (not daily) required careful timestamp comparison logic to ensure quests became available at the right time without creating duplicate entries.
+
+4. **Image Processing Pipeline** - Extracting 8x8 pixel sprites from a single image and upscaling them without blur required learning Sharp's image processing capabilities and configuring the nearest-neighbor algorithm.
+
+5. **Friend Request System** - Preventing duplicate friend requests while handling race conditions required careful database constraints and unique indexes.
+
+6. **Mobile Touch Events** - Making drag-and-drop decorations work on both desktop and mobile required implementing separate mouse and touch event handlers with consistent behavior.
+
+## 🏆 Accomplishments that we're proud of
+
+- **Real Environmental Impact** - Built a system that addresses actual urban forestry challenges using VPD and temperature data
+- **Complete Feature Set** - Delivered a fully functional app with 9 major feature categories in record time
+- **Pixel-Perfect Decorations** - Successfully implemented drag-and-drop decoration system with auto-save and responsive positioning
+- **Robust Database Design** - Created 15+ tables with proper relationships, constraints, and RLS policies
+- **30+ Achievements** - Designed a comprehensive achievement system that rewards various user behaviors
+- **Friend Collaboration** - Built a complete social system including profiles, friend requests, and collaborative quests
+- **Polished UI/UX** - Crafted an intuitive, visually appealing interface with smooth animations and responsive design
+- **Performance Optimizations** - Implemented debouncing, lazy loading, and optimistic updates for snappy user experience
+- **Comprehensive Documentation** - Created detailed README, deployment guides, and schema documentation
+- **Zero Major Bugs** - Through careful testing and AI-assisted debugging, we achieved a stable release
+
+## 📚 What we learned
+
+**Technical Skills:**
+- How to implement Row Level Security policies correctly for all CRUD operations
+- The power of percentage-based positioning for responsive drag-and-drop interfaces
+- Best practices for debounced auto-save to balance UX and performance
+- How to structure complex database schemas with proper foreign keys and constraints
+- The importance of optimistic UI updates for perceived performance
+- Image processing techniques for pixel art and sprite extraction
+
+**Development Process:**
+- Claude Code can dramatically accelerate development when given clear requirements
+- MCP servers provide powerful integrations for database and deployment operations
+- Breaking complex features into small, tracked tasks prevents oversight
+- Real-time debugging with database logs is invaluable for RLS issues
+- Git commit hygiene matters for collaboration and rollback capabilities
+
+**Product Design:**
+- Gamification works best when rewards align with real-world positive outcomes
+- Photo verification creates accountability while building community trust
+- Social features (friends, leaderboards) drive sustained engagement
+- Visual customization (decorations) creates emotional attachment to trees
+- Progressive disclosure (quests, achievements) maintains long-term interest
+
+**Community Impact:**
+- Technology can bridge the gap between good intentions and sustained action
+- Making environmental action fun and social increases participation
+- Real-time feedback (XP, acorns, levels) motivates continued engagement
+- Local focus (Durham, NC) creates stronger community bonds
+
+## 🚀 What's next for Tamagotree
+
+**Short-term (Next Sprint):**
+- 🌡️ **Weather Integration** - Display real-time VPD and temperature data on tree pages
+- 📱 **Push Notifications** - Remind users when their trees need watering
+- 🏅 **Weekly Challenges** - Special limited-time events with bonus rewards
+- 📊 **Analytics Dashboard** - Show users their total environmental impact over time
+- 🎨 **Custom Avatars** - Let users personalize their profile pictures
+
+**Medium-term (Next Quarter):**
+- 🗺️ **Expand to More Cities** - Scale beyond Durham to other NC cities
+- 🌈 **More Decorations** - Add seasonal decorations and rare collectibles
+- 🤝 **Tree Teams** - Form groups to care for multiple trees together
+- 📚 **Tree Species Education** - Detailed info about different tree types
+- 🎯 **Quest Variety** - Add more quest types (fertilizing, mulching, pruning)
+- 💬 **In-App Chat** - Let tree caregivers coordinate care schedules
+
+**Long-term (Future Vision):**
+- 🌍 **National Expansion** - Partner with cities across the US
+- 🏛️ **Municipal Dashboard** - Give city officials visibility into tree health
+- 🔬 **IoT Integration** - Soil moisture sensors for automated watering alerts
+- 🌱 **Tree Planting Events** - Organize community planting days
+- 💰 **Sponsor System** - Let businesses sponsor trees and support urban forestry
+- 🎓 **Educational Partnerships** - Work with schools to teach environmental stewardship
+- 📈 **Impact Metrics** - Calculate and display carbon offset, air quality improvements
+- 🏆 **Certification Program** - Recognize top caregivers with official Durham recognition
+
+**Technical Improvements:**
+- Implement progressive web app (PWA) features for offline support
+- Add more comprehensive test coverage (unit, integration, e2e)
+- Optimize image loading with WebP format and lazy loading
+- Implement Redis caching for frequently accessed data
+- Add GraphQL layer for more efficient data fetching
+
+---
+
 ## 📖 Table of Contents
 
 - [Features](#-features)
