@@ -501,12 +501,19 @@ const Profile = () => {
                       {profile?.guardian_rank}
                     </Badge>
                     <Badge variant="outline" className="text-sm">
-                      <Star className="w-3 h-3 mr-1" />
-                      {profile?.total_xp} Guardian Points
-                    </Badge>
-                    <Badge variant="outline" className="text-sm">
                       Member since {memberSince}
                     </Badge>
+                  </div>
+
+                  {/* Level Progress Bar */}
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">Level {profile?.level}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {xpProgress} / {xpToNextLevel} XP
+                      </span>
+                    </div>
+                    <Progress value={(xpProgress / xpToNextLevel) * 100} className="h-2" />
                   </div>
 
                   {/* Bio Section */}
@@ -677,19 +684,6 @@ const Profile = () => {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* XP Progress */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Level Progress</CardTitle>
-              <CardDescription>
-                {xpProgress} / {xpToNextLevel} XP until Level {(profile?.level || 1) + 1}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Progress value={(xpProgress / xpToNextLevel) * 100} className="h-4" />
             </CardContent>
           </Card>
 
