@@ -94,28 +94,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="border-t-4 border-b-4 border-foreground bg-primary/10 py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-3 gap-8 text-center">
-            {[
-              { label: "TREES", value: "1,247" },
-              { label: "GUARDIANS", value: "523" },
-              { label: "XP EARNED", value: "89.2K" }
-            ].map((stat, index) => (
-              <div key={index} className="space-y-2">
-                <div className="font-pixel text-2xl md:text-4xl text-primary animate-pulse-glow">
-                  {stat.value}
-                </div>
-                <div className="font-mono-retro text-sm md:text-lg text-foreground">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-16 text-center">
         <div className="max-w-2xl mx-auto retro-border bg-gradient-to-br from-primary/20 to-accent/20 p-8 md:p-12">
