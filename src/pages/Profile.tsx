@@ -20,14 +20,42 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Award, TreePine, Trophy, Sprout, Star, Trash2, Settings as SettingsIcon, Eye, EyeOff, Moon, Sun, Volume2, VolumeX } from "lucide-react";
+import { ArrowLeft, Award, TreePine, Trophy, Sprout, Star, Trash2, Settings as SettingsIcon, Eye, Moon, Sun, Volume2, VolumeX, Edit as EditIcon, Camera, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 
 interface Profile {
   username: string;
+  avatar_url: string | null;
+  bio: string | null;
   total_xp: number;
   level: number;
+  guardian_rank: string;
+  created_at: string;
+}
+
+interface Achievement {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+  xp_requirement: number | null;
+}
+
+interface UserAchievement {
+  achievement_id: string;
+  unlocked_at: string;
+  achievements: Achievement;
+}
+
+interface Tree {
+  id: string;
+  name: string;
+  species: string | null;
+  age_days: number;
+  health_status: string;
+  photo_url: string | null;
+  xp_earned: number;
   created_at: string;
 }
 
@@ -35,8 +63,19 @@ const Profile = () => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [treeCount, setTreeCount] = useState(0);
+  const [adoptedTrees, setAdoptedTrees] = useState<Tree[]>([]);
+  const [userAchievements, setUserAchievements] = useState<UserAchievement[]>([]);
+  const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Bio editing state
+  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [bioText, setBioText] = useState("");
+  const [isSavingBio, setIsSavingBio] = useState(false);
+
+  // Profile picture state
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Settings state
   const [profileVisible, setProfileVisible] = useState(true);
@@ -62,6 +101,8 @@ const Profile = () => {
     if (user) {
       fetchProfile();
       fetchTreeCount();
+      fetchAdoptedTrees();
+      fetchAchievements();
       loadSettings();
     }
   }, [user]);
@@ -140,12 +181,13 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("username, avatar_url, bio, total_xp, level, guardian_rank, created_at")
         .eq("id", user.id)
         .single();
 
       if (error) throw error;
       setProfile(data);
+      setBioText(data.bio || "");
     } catch (error) {
       console.error("Error fetching profile:", error);
     } finally {
@@ -166,6 +208,135 @@ const Profile = () => {
       setTreeCount(count || 0);
     } catch (error) {
       console.error("Error fetching tree count:", error);
+    }
+  };
+
+  const fetchAdoptedTrees = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("trees")
+        .select("id, name, species, age_days, health_status, photo_url, xp_earned, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setAdoptedTrees(data || []);
+    } catch (error) {
+      console.error("Error fetching adopted trees:", error);
+    }
+  };
+
+  const fetchAchievements = async () => {
+    if (!user) return;
+
+    try {
+      // Fetch all achievements
+      const { data: allAch, error: allError } = await supabase
+        .from("achievements")
+        .select("*")
+        .order("xp_requirement", { ascending: true });
+
+      if (allError) throw allError;
+      setAllAchievements(allAch || []);
+
+      // Fetch user's unlocked achievements
+      const { data: userAch, error: userError } = await supabase
+        .from("user_achievements")
+        .select(`
+          achievement_id,
+          unlocked_at,
+          achievements:achievement_id (
+            id,
+            name,
+            description,
+            icon,
+            xp_requirement
+          )
+        `)
+        .eq("user_id", user.id);
+
+      if (userError) throw userError;
+      setUserAchievements(userAch || []);
+    } catch (error) {
+      console.error("Error fetching achievements:", error);
+    }
+  };
+
+  const handleBioSave = async () => {
+    if (!user) return;
+
+    setIsSavingBio(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ bio: bioText })
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      setProfile((prev) => (prev ? { ...prev, bio: bioText } : prev));
+      setIsEditingBio(false);
+      toast({
+        title: "Bio Updated",
+        description: "Your bio has been saved successfully.",
+      });
+    } catch (error) {
+      console.error("Error updating bio:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update bio. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingBio(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !e.target.files || e.target.files.length === 0) return;
+
+    const file = e.target.files[0];
+    const fileExt = file.name.split(".").pop();
+    const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+
+    setIsUploadingAvatar(true);
+    try {
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      setProfile((prev) => (prev ? { ...prev, avatar_url: publicUrl } : prev));
+      toast({
+        title: "Profile Picture Updated",
+        description: "Your profile picture has been updated successfully.",
+      });
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload profile picture. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingAvatar(false);
     }
   };
 
@@ -244,23 +415,106 @@ const Profile = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-4xl font-bold text-white">
-                  {profile?.username.charAt(0).toUpperCase()}
+                {/* Profile Picture with Upload */}
+                <div className="relative group">
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile.username}
+                      className="w-24 h-24 rounded-full object-cover border-4 border-primary/20"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-4xl font-bold text-white">
+                      {profile?.username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    <Camera className="w-6 h-6 text-white" />
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarUpload}
+                      disabled={isUploadingAvatar}
+                    />
+                  </label>
+                  {isUploadingAvatar && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full">
+                      <Sprout className="w-6 h-6 text-white animate-pulse" />
+                    </div>
+                  )}
                 </div>
+
                 <div className="flex-1 text-center md:text-left">
                   <h1 className="text-3xl font-bold mb-2">{profile?.username}</h1>
-                  <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                  <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-3">
                     <Badge variant="secondary" className="text-sm">
                       <Trophy className="w-3 h-3 mr-1" />
-                      Level {profile?.level}
+                      {profile?.guardian_rank}
                     </Badge>
                     <Badge variant="outline" className="text-sm">
                       <Star className="w-3 h-3 mr-1" />
-                      {profile?.total_xp} XP
+                      {profile?.total_xp} Guardian Points
                     </Badge>
                     <Badge variant="outline" className="text-sm">
                       Member since {memberSince}
                     </Badge>
+                  </div>
+
+                  {/* Bio Section */}
+                  <div className="mt-4">
+                    {isEditingBio ? (
+                      <div className="space-y-2">
+                        <textarea
+                          value={bioText}
+                          onChange={(e) => setBioText(e.target.value)}
+                          placeholder="Tell others about yourself..."
+                          className="w-full p-2 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                          rows={3}
+                          maxLength={500}
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setIsEditingBio(false);
+                              setBioText(profile?.bio || "");
+                            }}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Cancel
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={handleBioSave}
+                            disabled={isSavingBio}
+                          >
+                            <Save className="w-4 h-4 mr-1" />
+                            {isSavingBio ? "Saving..." : "Save"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="group">
+                        <p className="text-muted-foreground italic text-sm">
+                          {profile?.bio || "No bio yet. Click edit to add one."}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsEditingBio(true)}
+                          className="mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <EditIcon className="w-4 h-4 mr-1" />
+                          Edit Bio
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -306,6 +560,70 @@ const Profile = () => {
             </Card>
           </div>
 
+          {/* Adopted Trees - Private to User */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TreePine className="w-5 h-5 text-primary" />
+                My Adopted Trees
+              </CardTitle>
+              <CardDescription>
+                Trees you're caring for (only visible to you)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {adoptedTrees.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Sprout className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>You haven't adopted any trees yet.</p>
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => navigate("/map")}
+                  >
+                    Explore the Map
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {adoptedTrees.map((tree) => (
+                    <div
+                      key={tree.id}
+                      className="p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/map?tree=${tree.id}`)}
+                    >
+                      {tree.photo_url && (
+                        <img
+                          src={tree.photo_url}
+                          alt={tree.name}
+                          className="w-full h-32 object-cover rounded-md mb-3"
+                        />
+                      )}
+                      <h3 className="font-semibold text-lg mb-1">{tree.name}</h3>
+                      {tree.species && (
+                        <p className="text-sm text-muted-foreground mb-2">{tree.species}</p>
+                      )}
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="flex items-center gap-1">
+                          <Badge variant={tree.health_status === "healthy" ? "default" : "destructive"}>
+                            {tree.health_status}
+                          </Badge>
+                        </span>
+                        <span className="text-muted-foreground">
+                          {tree.age_days} days old
+                        </span>
+                      </div>
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        <Star className="w-3 h-3 inline mr-1" />
+                        {tree.xp_earned} XP earned
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* XP Progress */}
           <Card>
             <CardHeader>
@@ -319,40 +637,61 @@ const Profile = () => {
             </CardContent>
           </Card>
 
-          {/* Achievements (Coming Soon) */}
+          {/* Achievements */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-primary" />
-                Achievements
+                Achievements & Badges
               </CardTitle>
-              <CardDescription>Unlock badges and rewards for your efforts</CardDescription>
+              <CardDescription>
+                {userAchievements.length} of {allAchievements.length} unlocked
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { name: "First Tree", icon: Sprout, unlocked: treeCount > 0 },
-                  { name: "Tree Collector", icon: TreePine, unlocked: treeCount >= 5 },
-                  { name: "XP Master", icon: Award, unlocked: (profile?.total_xp || 0) >= 100 },
-                  { name: "Level 5", icon: Trophy, unlocked: (profile?.level || 0) >= 5 },
-                ].map((achievement, i) => (
-                  <div
-                    key={i}
-                    className={`p-4 rounded-lg text-center transition-all ${
-                      achievement.unlocked
-                        ? "bg-gradient-to-br from-primary/20 to-secondary/20 border-2 border-primary/50"
-                        : "bg-muted/50 opacity-50"
-                    }`}
-                  >
-                    <achievement.icon
-                      className={`w-10 h-10 mx-auto mb-2 ${
-                        achievement.unlocked ? "text-primary animate-pulse-glow" : "text-muted-foreground"
-                      }`}
-                    />
-                    <div className="text-sm font-medium">{achievement.name}</div>
-                  </div>
-                ))}
-              </div>
+              {allAchievements.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Award className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No achievements available yet. Check back soon!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {allAchievements.map((achievement) => {
+                    const isUnlocked = userAchievements.some(
+                      (ua) => ua.achievement_id === achievement.id
+                    );
+                    const IconComponent = isUnlocked ? Award : Trophy;
+
+                    return (
+                      <div
+                        key={achievement.id}
+                        className={`p-4 rounded-lg text-center transition-all ${
+                          isUnlocked
+                            ? "bg-gradient-to-br from-primary/20 to-secondary/20 border-2 border-primary/50"
+                            : "bg-muted/50 opacity-50"
+                        }`}
+                        title={achievement.description || undefined}
+                      >
+                        {achievement.icon ? (
+                          <div className="text-4xl mx-auto mb-2">{achievement.icon}</div>
+                        ) : (
+                          <IconComponent
+                            className={`w-10 h-10 mx-auto mb-2 ${
+                              isUnlocked ? "text-primary" : "text-muted-foreground"
+                            }`}
+                          />
+                        )}
+                        <div className="text-sm font-medium">{achievement.name}</div>
+                        {achievement.xp_requirement !== null && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {achievement.xp_requirement} XP
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
 
