@@ -4,8 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, TreePine, MapPin, Calendar, Heart, Star, Sprout, Clock } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, TreePine, MapPin, Calendar, Heart, Star, Sprout, Clock, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { User } from "@supabase/supabase-js";
 
 interface Tree {
   name: string;
@@ -29,6 +41,15 @@ const TreeDetail = () => {
   const { toast } = useToast();
   const [tree, setTree] = useState<Tree | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    // Get current user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setCurrentUser(session?.user || null);
+    });
+  }, []);
 
   useEffect(() => {
     if (treeId) {
@@ -80,6 +101,52 @@ const TreeDetail = () => {
     });
   };
 
+  const handleDelete = async () => {
+    if (!treeId) return;
+
+    setIsDeleting(true);
+    try {
+      // Delete the tree's photo if it exists
+      if (tree?.photo_url) {
+        const photoPath = tree.photo_url.split('/tree-photos/')[1];
+        if (photoPath) {
+          await supabase.storage.from('tree-photos').remove([photoPath]);
+        }
+      }
+
+      // Delete the tree from database
+      const { error } = await supabase
+        .from('trees')
+        .delete()
+        .eq('id', treeId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Tree Deleted",
+        description: "The tree has been successfully removed.",
+      });
+
+      navigate('/dashboard');
+    } catch (error: any) {
+      console.error('Error deleting tree:', error);
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Failed to delete tree. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleEdit = () => {
+    navigate(`/tree/${treeId}/edit`);
+  };
+
+  // Check if current user is the owner of this tree
+  const isOwner = currentUser && tree?.user_id === currentUser.id;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-primary/5">
@@ -112,11 +179,47 @@ const TreeDetail = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-primary/5">
       <header className="border-b bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate(-1)} size="sm">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
+
+          {/* Edit and Delete buttons - only show for tree owner */}
+          {isOwner && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleEdit}>
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" disabled={isDeleting}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {isDeleting ? "Deleting..." : "Delete"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete "{tree.name}" and all associated data.
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete Tree
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </div>
       </header>
 

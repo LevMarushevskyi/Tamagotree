@@ -10,6 +10,7 @@ import Map from "./pages/Map";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import TreeDetail from "./pages/TreeDetail";
+import TreeEdit from "./pages/TreeEdit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/map" element={<Map />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/tree/:treeId" element={<TreeDetail />} />
+          <Route path="/tree/:treeId/edit" element={<TreeEdit />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
