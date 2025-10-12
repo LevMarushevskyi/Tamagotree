@@ -151,10 +151,10 @@ const Profile = () => {
 
   // Check achievements after data is loaded
   useEffect(() => {
-    if (user && profile && leaderboardRanks) {
+    if (user && profile) {
       checkAllAchievements();
     }
-  }, [user, profile?.acorns, leaderboardRanks.acorns]);
+  }, [user, treeCount]);
 
   // Load settings from localStorage
   const loadSettings = () => {
