@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, TreePine, MapPin, Calendar, Heart, Star, Sprout, Clock, Edit, Trash2, User as UserIcon } from "lucide-react";
+import { ArrowLeft, TreePine, MapPin, Heart, Star, Sprout, Clock, Edit, Trash2, User as UserIcon, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 
@@ -113,16 +113,6 @@ const TreeDetail = () => {
     if (health >= 70) return "bg-green-500";
     if (health >= 40) return "bg-yellow-500";
     return "bg-red-500";
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const handleDelete = async () => {
@@ -420,26 +410,25 @@ const TreeDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Timeline Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-purple-500" />
-                Timeline
-              </CardTitle>
-              <CardDescription>Important dates and milestones</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Created</p>
-                <p className="text-base">{formatDate(tree.created_at)}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">Last Updated</p>
-                <p className="text-base">{formatDate(tree.updated_at)}</p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Quests Section - Only visible to owner */}
+          {isOwner && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="w-5 h-5 text-purple-500" />
+                  Quests
+                </CardTitle>
+                <CardDescription>Complete quests to earn XP and level up your tree</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center py-8 text-muted-foreground">
+                  <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No active quests at the moment.</p>
+                  <p className="text-sm mt-2">Check back soon for new challenges!</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </main>
     </div>
