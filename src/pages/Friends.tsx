@@ -137,6 +137,7 @@ const Friends = () => {
         .select("*")
         .ilike("username", `%${searchQuery}%`)
         .neq("id", user.id)
+        .eq("profile_private", false)
         .limit(10);
 
       if (error) throw error;
