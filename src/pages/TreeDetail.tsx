@@ -103,6 +103,7 @@ const TreeDetail = () => {
   const [questPhoto, setQuestPhoto] = useState<File | null>(null);
   const [questPhotoPreview, setQuestPhotoPreview] = useState<string | null>(null);
   const [isCompletingQuest, setIsCompletingQuest] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState<Record<string, any>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -140,6 +141,7 @@ const TreeDetail = () => {
   useEffect(() => {
     if (tree && currentUser && tree.user_id === currentUser.id) {
       fetchDailyQuests();
+      fetchPendingRequests();
     }
   }, [tree, currentUser]);
 
@@ -240,6 +242,31 @@ const TreeDetail = () => {
       console.error("Error fetching quests:", error);
     } finally {
       setLoadingQuests(false);
+    }
+  };
+
+  const fetchPendingRequests = async () => {
+    if (!treeId || !currentUser) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("friend_task_requests")
+        .select("id, task_type, helper_profile:profiles!friend_task_requests_helper_id_fkey(username), expires_at")
+        .eq("requester_id", currentUser.id)
+        .eq("tree_id", treeId)
+        .eq("status", "pending");
+
+      if (error) throw error;
+
+      // Convert array to map by task_type for easy lookup
+      const requestsMap: Record<string, any> = {};
+      data?.forEach((request) => {
+        requestsMap[request.task_type] = request;
+      });
+
+      setPendingRequests(requestsMap);
+    } catch (error) {
+      console.error("Error fetching pending requests:", error);
     }
   };
 
@@ -929,6 +956,7 @@ const TreeDetail = () => {
                           title: "Request Sent",
                           description: "Your friend will be notified!",
                         });
+                        fetchPendingRequests();
                       }}
                     />
                   )}
@@ -950,9 +978,11 @@ const TreeDetail = () => {
                   dailyQuests.map((userQuest) => {
                     const quest = userQuest.quests;
                     const isCompleted = userQuest.completed;
+                    const pendingRequest = pendingRequests[quest.name];
+                    const hasPendingRequest = !!pendingRequest;
 
                     return (
-                      <Card key={userQuest.id} className={isCompleted ? "opacity-60 bg-muted/50" : "border-primary/20"}>
+                      <Card key={userQuest.id} className={isCompleted || hasPendingRequest ? "opacity-60 bg-muted/50" : "border-primary/20"}>
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1">
@@ -962,8 +992,16 @@ const TreeDetail = () => {
                                 {isCompleted && (
                                   <Badge variant="secondary" className="ml-auto">Completed</Badge>
                                 )}
+                                {hasPendingRequest && !isCompleted && (
+                                  <Badge variant="outline" className="ml-auto">Friend Helping</Badge>
+                                )}
                               </div>
                               <p className="text-sm text-muted-foreground mb-3">{quest.description}</p>
+                              {hasPendingRequest && !isCompleted && (
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  {pendingRequest.helper_profile?.username} is helping with this quest
+                                </p>
+                              )}
                               <div className="flex flex-wrap gap-2 text-xs">
                                 {quest.acorn_reward && quest.acorn_reward > 0 && (
                                   <Badge variant="outline" className="gap-1">
@@ -984,11 +1022,11 @@ const TreeDetail = () => {
                             </div>
                             <Button
                               size="sm"
-                              disabled={isCompleted}
+                              disabled={isCompleted || hasPendingRequest}
                               onClick={() => openQuestDialog(userQuest.id, quest)}
                               className="shrink-0"
                             >
-                              {isCompleted ? "Done" : "Complete"}
+                              {isCompleted ? "Done" : hasPendingRequest ? "Pending" : "Complete"}
                             </Button>
                           </div>
                         </CardContent>

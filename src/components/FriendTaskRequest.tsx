@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Droplets, Leaf, Scissors, Search } from "lucide-react";
+import { Users } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 interface Friend {
@@ -41,17 +41,15 @@ interface FriendTaskRequestProps {
 }
 
 const TASK_TYPES = [
-  { value: "water", label: "Water Tree", icon: Droplets, color: "text-blue-500" },
-  { value: "fertilize", label: "Fertilize", icon: Leaf, color: "text-green-500" },
-  { value: "prune", label: "Prune", icon: Scissors, color: "text-orange-500" },
-  { value: "inspect", label: "Inspect", icon: Search, color: "text-purple-500" },
+  { value: "Morning Dew", label: "Morning Dew", emoji: "💧", description: "Water the tree" },
+  { value: "Petal Performer", label: "Petal Performer", emoji: "🌸", description: "Care for flowers" },
+  { value: "Leaf Collector", label: "Leaf Collector", emoji: "🍂", description: "Clean up leaves" },
 ];
 
 const TASK_REWARDS = {
-  water: { requester: { acorns: 20, bp: 30 }, helper: { acorns: 30, bp: 40 } },
-  fertilize: { requester: { acorns: 25, bp: 35 }, helper: { acorns: 35, bp: 45 } },
-  prune: { requester: { acorns: 30, bp: 40 }, helper: { acorns: 40, bp: 50 } },
-  inspect: { requester: { acorns: 15, bp: 25 }, helper: { acorns: 25, bp: 35 } },
+  "Morning Dew": { requester: { acorns: 100, bp: 100 }, helper: { acorns: 100, bp: 100 } },
+  "Petal Performer": { requester: { acorns: 200, bp: 50 }, helper: { acorns: 200, bp: 50 } },
+  "Leaf Collector": { requester: { acorns: 100, bp: 200 }, helper: { acorns: 100, bp: 200 } },
 };
 
 export const FriendTaskRequest = ({ treeId, treeName, currentUser, onRequestSent }: FriendTaskRequestProps) => {
@@ -199,17 +197,14 @@ export const FriendTaskRequest = ({ treeId, treeName, currentUser, onRequestSent
                 <SelectValue placeholder="Choose a task" />
               </SelectTrigger>
               <SelectContent>
-                {TASK_TYPES.map((task) => {
-                  const Icon = task.icon;
-                  return (
-                    <SelectItem key={task.value} value={task.value}>
-                      <div className="flex items-center gap-2">
-                        <Icon className={`w-4 h-4 ${task.color}`} />
-                        {task.label}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
+                {TASK_TYPES.map((task) => (
+                  <SelectItem key={task.value} value={task.value}>
+                    <div className="flex items-center gap-2">
+                      <span>{task.emoji}</span>
+                      <span>{task.label}</span>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -220,23 +215,20 @@ export const FriendTaskRequest = ({ treeId, treeName, currentUser, onRequestSent
               <CardContent className="pt-6">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    {(() => {
-                      const Icon = selectedTaskInfo.icon;
-                      return <Icon className={`w-4 h-4 ${selectedTaskInfo.color}`} />;
-                    })()}
+                    <span className="text-xl">{selectedTaskInfo.emoji}</span>
                     <span>Rewards for {selectedTaskInfo.label}</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="space-y-1">
                       <p className="text-muted-foreground">You receive:</p>
-                      <p className="font-semibold">🌰 {rewards.requester.acorns} Acorns</p>
-                      <p className="font-semibold">⭐ {rewards.requester.bp} BP</p>
+                      <p className="font-semibold">🪙 {rewards.requester.acorns} Acorns</p>
+                      <p className="font-semibold">🌱 {rewards.requester.bp} BP</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-muted-foreground">Friend receives:</p>
-                      <p className="font-semibold">🌰 {rewards.helper.acorns} Acorns</p>
-                      <p className="font-semibold">⭐ {rewards.helper.bp} BP</p>
+                      <p className="font-semibold">🪙 {rewards.helper.acorns} Acorns</p>
+                      <p className="font-semibold">🌱 {rewards.helper.bp} BP</p>
                     </div>
                   </div>
                 </div>

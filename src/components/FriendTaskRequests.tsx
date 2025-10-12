@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Droplets, Leaf, Scissors, Search, Users, Clock, TreePine, CheckCircle2 } from "lucide-react";
+import { Users, Clock, TreePine, CheckCircle2, X } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 
 interface FriendTaskRequest {
@@ -39,11 +39,10 @@ interface FriendTaskRequestsProps {
   currentUser: User;
 }
 
-const TASK_ICONS: Record<string, { icon: any; color: string; label: string }> = {
-  water: { icon: Droplets, color: "text-blue-500", label: "Water Tree" },
-  fertilize: { icon: Leaf, color: "text-green-500", label: "Fertilize" },
-  prune: { icon: Scissors, color: "text-orange-500", label: "Prune" },
-  inspect: { icon: Search, color: "text-purple-500", label: "Inspect" },
+const TASK_INFO: Record<string, { emoji: string; label: string }> = {
+  "Morning Dew": { emoji: "💧", label: "Morning Dew" },
+  "Petal Performer": { emoji: "🌸", label: "Petal Performer" },
+  "Leaf Collector": { emoji: "🍂", label: "Leaf Collector" },
 };
 
 export const FriendTaskRequests = ({ currentUser }: FriendTaskRequestsProps) => {
@@ -51,6 +50,7 @@ export const FriendTaskRequests = ({ currentUser }: FriendTaskRequestsProps) => 
   const [sentRequests, setSentRequests] = useState<FriendTaskRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export const FriendTaskRequests = ({ currentUser }: FriendTaskRequestsProps) => 
 
       if (incomingError) throw incomingError;
 
-      // Fetch sent requests (where user is the requester)
+      // Fetch sent requests (where user is the requester) - only show pending
       const { data: sent, error: sentError } = await supabase
         .from("friend_task_requests")
         .select(`
@@ -84,7 +84,7 @@ export const FriendTaskRequests = ({ currentUser }: FriendTaskRequestsProps) => 
           tree(name, species)
         `)
         .eq("requester_id", currentUser.id)
-        .in("status", ["pending", "completed"])
+        .eq("status", "pending")
         .order("created_at", { ascending: false });
 
       if (sentError) throw sentError;
@@ -145,7 +145,7 @@ export const FriendTaskRequests = ({ currentUser }: FriendTaskRequestsProps) => 
 
       toast({
         title: "Task Completed!",
-        description: `You earned ${request.helper_reward_acorns} acorns and ${request.helper_reward_bp} BP!`,
+        description: `You earned ${request.helper_reward_acorns} acorns and ${request.helper_reward_bp} BP! ${request.requester_profile.username} was notified.`,
       });
 
       await fetchRequests();
@@ -158,6 +158,34 @@ export const FriendTaskRequests = ({ currentUser }: FriendTaskRequestsProps) => 
       });
     } finally {
       setCompletingId(null);
+    }
+  };
+
+  const cancelRequest = async (requestId: string) => {
+    setCancellingId(requestId);
+    try {
+      const { error } = await supabase
+        .from("friend_task_requests")
+        .update({ status: "cancelled" })
+        .eq("id", requestId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Request Cancelled",
+        description: "The friend task request has been cancelled.",
+      });
+
+      await fetchRequests();
+    } catch (error: any) {
+      console.error("Error cancelling request:", error);
+      toast({
+        title: "Failed to Cancel Request",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -175,8 +203,7 @@ export const FriendTaskRequests = ({ currentUser }: FriendTaskRequestsProps) => 
   };
 
   const RequestCard = ({ request, isIncoming }: { request: FriendTaskRequest; isIncoming: boolean }) => {
-    const taskInfo = TASK_ICONS[request.task_type] || TASK_ICONS.water;
-    const Icon = taskInfo.icon;
+    const taskInfo = TASK_INFO[request.task_type] || TASK_INFO["Morning Dew"];
     const profile = isIncoming ? request.requester_profile : request.helper_profile;
     const isExpired = new Date(request.expires_at) < new Date();
     const isCompleted = request.status === "completed";
@@ -187,7 +214,7 @@ export const FriendTaskRequests = ({ currentUser }: FriendTaskRequestsProps) => 
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <Icon className={`w-5 h-5 ${taskInfo.color}`} />
+                <span className="text-xl">{taskInfo.emoji}</span>
                 <h3 className="font-semibold">{taskInfo.label}</h3>
                 {isCompleted && <Badge variant="secondary">Completed</Badge>}
                 {isExpired && !isCompleted && <Badge variant="destructive">Expired</Badge>}
@@ -214,19 +241,19 @@ export const FriendTaskRequests = ({ currentUser }: FriendTaskRequestsProps) => 
                 {isIncoming ? (
                   <>
                     <Badge variant="outline" className="gap-1">
-                      🌰 {request.helper_reward_acorns} Acorns
+                      🪙 {request.helper_reward_acorns} Acorns
                     </Badge>
                     <Badge variant="outline" className="gap-1">
-                      ⭐ {request.helper_reward_bp} BP
+                      🌱 {request.helper_reward_bp} BP
                     </Badge>
                   </>
                 ) : (
                   <>
                     <Badge variant="outline" className="gap-1">
-                      🌰 {request.requester_reward_acorns} Acorns
+                      🪙 {request.requester_reward_acorns} Acorns
                     </Badge>
                     <Badge variant="outline" className="gap-1">
-                      ⭐ {request.requester_reward_bp} BP
+                      🌱 {request.requester_reward_bp} BP
                     </Badge>
                   </>
                 )}
@@ -241,6 +268,18 @@ export const FriendTaskRequests = ({ currentUser }: FriendTaskRequestsProps) => 
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />
                 {completingId === request.id ? "Completing..." : "Complete"}
+              </Button>
+            )}
+
+            {!isIncoming && !isCompleted && !isExpired && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => cancelRequest(request.id)}
+                disabled={cancellingId === request.id}
+              >
+                <X className="w-4 h-4 mr-2" />
+                {cancellingId === request.id ? "Cancelling..." : "Cancel"}
               </Button>
             )}
           </div>
