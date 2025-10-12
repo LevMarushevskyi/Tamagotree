@@ -35,6 +35,11 @@ interface Tree {
   user_id: string | null;
 }
 
+interface Profile {
+  avatar_url: string | null;
+  username: string;
+}
+
 const TreeDetail = () => {
   const { treeId } = useParams();
   const navigate = useNavigate();
@@ -42,14 +47,33 @@ const TreeDetail = () => {
   const [tree, setTree] = useState<Tree | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     // Get current user
     supabase.auth.getSession().then(({ data: { session } }) => {
       setCurrentUser(session?.user || null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
     });
   }, []);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("avatar_url, username")
+        .eq("id", userId)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
 
   useEffect(() => {
     if (treeId) {
@@ -234,14 +258,26 @@ const TreeDetail = () => {
               </>
             )}
 
-            {/* Profile Icon */}
+            {/* Profile Picture */}
             <Button
               variant="ghost"
               size="icon"
-              className="rounded-full w-10 h-10"
+              className="rounded-full w-10 h-10 p-0 overflow-hidden"
               onClick={() => navigate('/profile')}
             >
-              <UserIcon className="w-5 h-5" />
+              {profile?.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.username}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">
+                    {profile?.username?.charAt(0).toUpperCase() || <UserIcon className="w-5 h-5" />}
+                  </span>
+                </div>
+              )}
             </Button>
           </div>
         </div>
