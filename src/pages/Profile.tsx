@@ -298,8 +298,32 @@ const Profile = () => {
     if (!user || !e.target.files || e.target.files.length === 0) return;
 
     const file = e.target.files[0];
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload a valid image file (JPEG, PNG, GIF, or WebP)",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const fileExt = file.name.split(".").pop();
-    const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+    // Use folder structure: {user_id}/{filename}.{ext} to match storage policy
+    const filePath = `${user.id}/avatar-${Date.now()}.${fileExt}`;
 
     setIsUploadingAvatar(true);
     try {
@@ -328,11 +352,12 @@ const Profile = () => {
         title: "Profile Picture Updated",
         description: "Your profile picture has been updated successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading avatar:", error);
+      const errorMessage = error?.message || "Failed to upload profile picture. Please try again.";
       toast({
-        title: "Error",
-        description: "Failed to upload profile picture. Please try again.",
+        title: "Upload Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
