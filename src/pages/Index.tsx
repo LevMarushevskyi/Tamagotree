@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sprout, Droplet, Trophy, Map } from "lucide-react";
 import heroImage from "@/assets/hero-banner.jpg";
-import treeIcon from "@/assets/tree-icon.png";
 
 const Index = () => {
   return (
@@ -11,7 +10,7 @@ const Index = () => {
       <header className="border-b-4 border-foreground bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={treeIcon} alt="Tree" className="w-12 h-12 pixelated" />
+            <img src="/favicon.png" alt="Tamagotree Logo" className="w-12 h-12 pixelated" />
             <h1 className="font-pixel text-primary text-sm md:text-base">TAMAGOTREE</h1>
           </div>
           <Link to="/auth">
