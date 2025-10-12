@@ -181,7 +181,7 @@ const TreeDetail = () => {
   };
 
   const handleReportIssue = async () => {
-    if (!currentUser || !treeId) {
+    if (!currentUser || !treeId || !tree) {
       toast({
         title: "Authentication Required",
         description: "Please log in to report an issue.",
@@ -201,6 +201,7 @@ const TreeDetail = () => {
 
     setIsSubmittingReport(true);
     try {
+      // Insert report into database
       const { error } = await supabase.from("tree_reports").insert({
         tree_id: treeId,
         reporter_id: currentUser.id,
@@ -209,6 +210,43 @@ const TreeDetail = () => {
       });
 
       if (error) throw error;
+
+      // Get reporter's username
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", currentUser.id)
+        .single();
+
+      // Call edge function to create GitHub issue
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        try {
+          const response = await supabase.functions.invoke("create-tree-report-issue", {
+            body: {
+              tree_id: treeId,
+              tree_name: tree.name,
+              reason: reportReason,
+              details: reportDetails.trim() || null,
+              reporter_username: profileData?.username || "Unknown",
+              tree_location: {
+                latitude: tree.latitude,
+                longitude: tree.longitude,
+              },
+            },
+          });
+
+          if (response.error) {
+            console.error("Failed to create GitHub issue:", response.error);
+            // Don't fail the whole operation if GitHub issue creation fails
+          } else {
+            console.log("GitHub issue created:", response.data);
+          }
+        } catch (githubError) {
+          console.error("Error calling edge function:", githubError);
+          // Continue even if GitHub issue creation fails
+        }
+      }
 
       toast({
         title: "Report Submitted",
