@@ -35,6 +35,12 @@ interface Profile {
   created_at: string;
 }
 
+interface LeaderboardRank {
+  acorns: number | null;
+  totalXp: number | null;
+  treeBp: number | null;
+}
+
 interface Achievement {
   id: string;
   name: string;
@@ -67,6 +73,11 @@ const Profile = () => {
   const [adoptedTrees, setAdoptedTrees] = useState<Tree[]>([]);
   const [userAchievements, setUserAchievements] = useState<UserAchievement[]>([]);
   const [allAchievements, setAllAchievements] = useState<Achievement[]>([]);
+  const [leaderboardRanks, setLeaderboardRanks] = useState<LeaderboardRank>({
+    acorns: null,
+    totalXp: null,
+    treeBp: null,
+  });
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -104,6 +115,7 @@ const Profile = () => {
       fetchTreeCount();
       fetchAdoptedTrees();
       fetchAchievements();
+      fetchLeaderboardRanks();
       loadSettings();
     }
   }, [user]);
@@ -262,6 +274,69 @@ const Profile = () => {
       setUserAchievements(userAch || []);
     } catch (error) {
       console.error("Error fetching achievements:", error);
+    }
+  };
+
+  const getWeekStart = () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Monday as start of week
+    const weekStart = new Date(now.setDate(diff));
+    weekStart.setHours(0, 0, 0, 0);
+    return weekStart.toISOString();
+  };
+
+  const fetchLeaderboardRanks = async () => {
+    if (!user) return;
+
+    try {
+      const weekStart = getWeekStart();
+
+      // Fetch Acorns rank
+      const { data: acornsData, error: acornsError } = await supabase
+        .from("profiles")
+        .select("id, acorns")
+        .order("acorns", { ascending: false });
+
+      if (acornsError) throw acornsError;
+      const acornsRank = acornsData.findIndex((p) => p.id === user.id) + 1;
+
+      // Fetch Total XP rank
+      const { data: xpData, error: xpError } = await supabase
+        .from("profiles")
+        .select("id, total_xp")
+        .order("total_xp", { ascending: false });
+
+      if (xpError) throw xpError;
+      const xpRank = xpData.findIndex((p) => p.id === user.id) + 1;
+
+      // Fetch Tree BP rank (this week)
+      const { data: bpData, error: bpError } = await supabase
+        .from("tree")
+        .select("user_id, xp_earned")
+        .gte("created_at", weekStart);
+
+      if (bpError) throw bpError;
+
+      // Group by user_id and sum xp_earned
+      const userBpMap = new Map<string, number>();
+      bpData.forEach((tree) => {
+        const currentBp = userBpMap.get(tree.user_id) || 0;
+        userBpMap.set(tree.user_id, currentBp + tree.xp_earned);
+      });
+
+      // Sort by BP and find user's rank
+      const sortedBp = Array.from(userBpMap.entries())
+        .sort((a, b) => b[1] - a[1]);
+      const bpRank = sortedBp.findIndex(([userId]) => userId === user.id) + 1;
+
+      setLeaderboardRanks({
+        acorns: acornsRank > 0 ? acornsRank : null,
+        totalXp: xpRank > 0 ? xpRank : null,
+        treeBp: bpRank > 0 ? bpRank : null,
+      });
+    } catch (error) {
+      console.error("Error fetching leaderboard ranks:", error);
     }
   };
 
@@ -496,10 +571,36 @@ const Profile = () => {
                 <div className="flex-1 text-center md:text-left">
                   <h1 className="text-3xl font-bold mb-2">{profile?.username}</h1>
                   <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-3">
-                    <Badge variant="secondary" className="text-sm">
-                      <Trophy className="w-3 h-3 mr-1" />
-                      {profile?.guardian_rank}
-                    </Badge>
+                    {leaderboardRanks.acorns && (
+                      <Badge
+                        variant="secondary"
+                        className="text-sm cursor-pointer hover:bg-secondary/80 transition-colors"
+                        onClick={() => navigate("/leaderboards")}
+                      >
+                        <Coins className="w-3 h-3 mr-1" />
+                        #{leaderboardRanks.acorns} Acorns
+                      </Badge>
+                    )}
+                    {leaderboardRanks.totalXp && (
+                      <Badge
+                        variant="secondary"
+                        className="text-sm cursor-pointer hover:bg-secondary/80 transition-colors"
+                        onClick={() => navigate("/leaderboards")}
+                      >
+                        <Star className="w-3 h-3 mr-1" />
+                        #{leaderboardRanks.totalXp} Total XP
+                      </Badge>
+                    )}
+                    {leaderboardRanks.treeBp && (
+                      <Badge
+                        variant="secondary"
+                        className="text-sm cursor-pointer hover:bg-secondary/80 transition-colors"
+                        onClick={() => navigate("/leaderboards")}
+                      >
+                        <Sprout className="w-3 h-3 mr-1" />
+                        #{leaderboardRanks.treeBp} Tree BP
+                      </Badge>
+                    )}
                     <Badge variant="outline" className="text-sm">
                       Member since {memberSince}
                     </Badge>
