@@ -627,7 +627,11 @@ const Friends = () => {
                     const profile = friendship.friend_profile;
 
                     return (
-                      <Card key={friendship.id}>
+                      <Card
+                        key={friendship.id}
+                        className="cursor-pointer hover:border-primary transition-colors"
+                        onClick={() => navigate(`/friend/${profile.id}`)}
+                      >
                         <CardContent className="p-4 flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
@@ -652,7 +656,10 @@ const Friends = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => removeFriend(friendship.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFriend(friendship.id);
+                            }}
                           >
                             Remove
                           </Button>

@@ -10,6 +10,7 @@ import Map from "./pages/Map";
 import Profile from "./pages/Profile";
 import Leaderboards from "./pages/Leaderboards";
 import Friends from "./pages/Friends";
+import FriendProfile from "./pages/FriendProfile";
 import Shop from "./pages/Shop";
 import ResetPassword from "./pages/ResetPassword";
 import TreeDetail from "./pages/TreeDetail";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/profile" element={<Profile />} />
           <Route path="/leaderboards" element={<Leaderboards />} />
           <Route path="/friends" element={<Friends />} />
+          <Route path="/friend/:userId" element={<FriendProfile />} />
           <Route path="/shop" element={<Shop />} />
           <Route path="/tree/:treeId" element={<TreeDetail />} />
           <Route path="/tree/:treeId/edit" element={<TreeEdit />} />
