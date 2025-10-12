@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, TreePine, MapPin, Calendar, Heart, Star, Sprout, Clock, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, TreePine, MapPin, Calendar, Heart, Star, Sprout, Clock, Edit, Trash2, User as UserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 
@@ -178,52 +178,76 @@ const TreeDetail = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-primary/5">
-      <header className="border-b bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate(-1)} size="sm">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+      {/* Top Navigation Bar */}
+      <div className="absolute top-0 left-0 right-0 z-[1000] bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b shadow-sm">
+        <div className="flex items-center justify-between p-4">
+          {/* Left: Back to Map */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="gap-2"
+          >
+            <MapPin className="w-5 h-5" />
+            <span className="hidden sm:inline">Back to Map</span>
           </Button>
 
-          {/* Edit and Delete buttons - only show for tree owner */}
-          {isOwner && (
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleEdit}>
-                <Edit className="w-4 h-4 mr-2" />
-                Edit
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" disabled={isDeleting}>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    {isDeleting ? "Deleting..." : "Delete"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete "{tree.name}" and all associated data.
-                      This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDelete}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Delete Tree
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          )}
-        </div>
-      </header>
+          {/* Center: Tree Title (on mobile, hide on desktop) */}
+          <div className="flex items-center gap-2 sm:hidden">
+            <TreePine className="w-5 h-5 text-primary" />
+          </div>
 
-      <main className="container mx-auto px-4 py-8">
+          {/* Right: Edit/Delete buttons (if owner) and Profile */}
+          <div className="flex items-center gap-2">
+            {isOwner && (
+              <>
+                <Button variant="outline" size="sm" onClick={handleEdit}>
+                  <Edit className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Edit</span>
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm" disabled={isDeleting}>
+                      <Trash2 className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">{isDeleting ? "Deleting..." : "Delete"}</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete "{tree.name}" and all associated data.
+                        This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDelete}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete Tree
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
+            )}
+
+            {/* Profile Icon */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full w-10 h-10"
+              onClick={() => navigate('/profile')}
+            >
+              <UserIcon className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <main className="container mx-auto px-4 py-8 pt-24">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Header Section */}
           <div className="text-center mb-8">
