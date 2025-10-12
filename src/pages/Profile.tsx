@@ -448,6 +448,7 @@ const Profile = () => {
 
         case "Social Butterfly": {
           // Count accepted friendships created this week
+          const weekStart = getWeekStart();
           const { count } = await supabase
             .from("friendships")
             .select("*", { count: "exact", head: true })
