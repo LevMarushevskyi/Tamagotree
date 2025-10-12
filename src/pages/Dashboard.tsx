@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { User as UserIcon, TreePine, MapPin } from "lucide-react";
+import { User as UserIcon, TreePine } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
+import MapView from "@/components/map/MapView";
 
 interface Profile {
   username: string;
@@ -76,19 +77,11 @@ const Dashboard = () => {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
-      {/* Map Container (Placeholder) */}
-      <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
-        {/* Placeholder for map - will be replaced with actual map component */}
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center space-y-4 p-8 bg-white/80 dark:bg-gray-900/80 rounded-lg shadow-lg backdrop-blur-sm">
-            <MapPin className="w-16 h-16 mx-auto text-primary animate-bounce" />
-            <h2 className="text-2xl font-bold">Interactive Map</h2>
-            <p className="text-muted-foreground max-w-md">
-              The interactive map will be displayed here, showing all trees in the Durham area
-              that you can adopt and care for.
-            </p>
-          </div>
-        </div>
+      {/* Map Container */}
+      <div className="absolute inset-0">
+        <MapView onLocationUpdate={(lat, lng) => {
+          console.log("User location:", lat, lng);
+        }} />
       </div>
 
       {/* Top Navigation Bar */}
