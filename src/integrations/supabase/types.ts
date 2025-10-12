@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          xp_requirement: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          xp_requirement?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          xp_requirement?: number | null
+        }
+        Relationships: []
+      }
       neighborhoods: {
         Row: {
           created_at: string
@@ -42,8 +69,10 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          guardian_rank: string
           id: string
           level: number
+          profile_private: boolean
           total_xp: number
           updated_at: string
           username: string
@@ -51,8 +80,10 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          guardian_rank?: string
           id: string
           level?: number
+          profile_private?: boolean
           total_xp?: number
           updated_at?: string
           username: string
@@ -60,8 +91,10 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          guardian_rank?: string
           id?: string
           level?: number
+          profile_private?: boolean
           total_xp?: number
           updated_at?: string
           username?: string
@@ -118,6 +151,57 @@ export type Database = {
           },
         ]
       }
+      tree_graveyard: {
+        Row: {
+          cause_of_death: string | null
+          created_at: string
+          days_lived: number
+          died_at: string
+          id: string
+          latitude: number
+          longitude: number
+          name: string
+          notes: string | null
+          original_tree_id: string | null
+          photo_url: string | null
+          planted_at: string
+          species: string | null
+          user_id: string
+        }
+        Insert: {
+          cause_of_death?: string | null
+          created_at?: string
+          days_lived: number
+          died_at?: string
+          id?: string
+          latitude: number
+          longitude: number
+          name: string
+          notes?: string | null
+          original_tree_id?: string | null
+          photo_url?: string | null
+          planted_at: string
+          species?: string | null
+          user_id: string
+        }
+        Update: {
+          cause_of_death?: string | null
+          created_at?: string
+          days_lived?: number
+          died_at?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          name?: string
+          notes?: string | null
+          original_tree_id?: string | null
+          photo_url?: string | null
+          planted_at?: string
+          species?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       trees: {
         Row: {
           age_days: number
@@ -162,6 +246,32 @@ export type Database = {
           xp_earned?: number
         }
         Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_neighborhoods: {
         Row: {
