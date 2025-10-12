@@ -203,6 +203,7 @@ export type Database = {
         Row: {
           age_days: number
           created_at: string
+          danger_score: number
           health_percentage: number
           health_status: string
           id: string
@@ -219,6 +220,7 @@ export type Database = {
         Insert: {
           age_days?: number
           created_at?: string
+          danger_score?: number
           health_percentage?: number
           health_status?: string
           id?: string
@@ -235,6 +237,7 @@ export type Database = {
         Update: {
           age_days?: number
           created_at?: string
+          danger_score?: number
           health_percentage?: number
           health_status?: string
           id?: string
