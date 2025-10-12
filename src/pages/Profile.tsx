@@ -109,7 +109,7 @@ const Profile = () => {
 
   // Load settings from localStorage
   const loadSettings = () => {
-    const savedSettings = localStorage.getItem('tomagotree-settings');
+    const savedSettings = localStorage.getItem('tamagotree-settings');
     if (savedSettings) {
       const settings = JSON.parse(savedSettings);
       setProfileVisible(settings.profileVisible ?? true);
@@ -122,10 +122,10 @@ const Profile = () => {
 
   // Save settings to localStorage
   const saveSettings = (key: string, value: any) => {
-    const savedSettings = localStorage.getItem('tomagotree-settings');
+    const savedSettings = localStorage.getItem('tamagotree-settings');
     const settings = savedSettings ? JSON.parse(savedSettings) : {};
     settings[key] = value;
-    localStorage.setItem('tomagotree-settings', JSON.stringify(settings));
+    localStorage.setItem('tamagotree-settings', JSON.stringify(settings));
   };
 
   const handleProfileVisibilityChange = (checked: boolean) => {

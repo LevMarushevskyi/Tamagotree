@@ -100,7 +100,7 @@ const Dashboard = () => {
           {/* Center: Title */}
           <div className="flex items-center gap-2">
             <TreePine className="w-6 h-6 text-primary" />
-            <h1 className="text-xl font-bold">Tomagotree</h1>
+            <h1 className="text-xl font-bold">Tamagotree</h1>
           </div>
 
           {/* Right: Profile Picture - Click to go to profile */}

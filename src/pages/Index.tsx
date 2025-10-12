@@ -12,7 +12,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={treeIcon} alt="Tree" className="w-12 h-12 pixelated" />
-            <h1 className="font-pixel text-primary text-sm md:text-base">TOMAGOTREE</h1>
+            <h1 className="font-pixel text-primary text-sm md:text-base">TAMAGOTREE</h1>
           </div>
           <Link to="/auth">
             <Button variant="retro" size="sm">
@@ -138,7 +138,7 @@ const Index = () => {
       <footer className="border-t-4 border-foreground bg-card py-8">
         <div className="container mx-auto px-4 text-center">
           <p className="font-mono-retro text-base text-muted-foreground">
-            © 2025 TOMAGOTREE • DURHAM TREE GUARDIANS
+            © 2025 TAMAGOTREE • DURHAM TREE GUARDIANS
           </p>
           <p className="font-mono-retro text-sm text-muted-foreground mt-2">
             MADE WITH ♥ FOR THE PLANET

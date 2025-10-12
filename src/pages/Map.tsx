@@ -119,7 +119,7 @@ const Map = () => {
             <Sprout className="w-16 h-16 mx-auto mb-4 text-primary animate-float" />
             <h1 className="text-3xl font-bold mb-2">Report a Tree</h1>
             <p className="text-muted-foreground">
-              Add a new sapling to the Tomagotree network
+              Add a new sapling to the Tamagotree network
             </p>
           </div>
 

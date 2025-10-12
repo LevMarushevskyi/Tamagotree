@@ -89,7 +89,7 @@ const Auth = () => {
       if (error) throw error;
 
       toast({
-        title: "Welcome to Tomagotree! 🌱",
+        title: "Welcome to Tamagotree! 🌱",
         description: "Check your email to verify your account.",
       });
     } catch (error: any) {
@@ -206,7 +206,7 @@ const Auth = () => {
           <div className="flex items-center justify-center gap-2 mb-4">
             <Sprout className="w-12 h-12 text-primary animate-wiggle" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Tomagotree
+              Tamagotree
             </h1>
           </div>
           <p className="text-muted-foreground">Grow trees, earn XP, save Durham</p>
