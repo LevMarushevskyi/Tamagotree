@@ -15,6 +15,9 @@ const Auth = () => {
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showForgotEmail, setShowForgotEmail] = useState(false);
+  const [foundEmail, setFoundEmail] = useState("");
+  const [obfuscatedEmail, setObfuscatedEmail] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -100,10 +103,55 @@ const Auth = () => {
         description: "Check your email for a link to reset your password.",
       });
       setShowForgotPassword(false);
+      setShowForgotEmail(false);
     } catch (error: any) {
       toast({
         title: "Password reset failed",
         description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLookupEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const response = await supabase.functions.invoke('lookup-email-by-username', {
+        body: { username },
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      const { email: userEmail, obfuscatedEmail: obfEmail, message } = response.data;
+
+      if (userEmail) {
+        // Found the email
+        setFoundEmail(userEmail);
+        setObfuscatedEmail(obfEmail);
+        setEmail(userEmail);
+        toast({
+          title: "Email found",
+          description: `We found an account with email: ${obfEmail}`,
+        });
+      } else {
+        // Username not found, but don't reveal this for security
+        toast({
+          title: "Request processed",
+          description: message || "If this username exists, a password reset email will be sent.",
+        });
+        setShowForgotEmail(false);
+        setShowForgotPassword(false);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Lookup failed",
+        description: error.message || "An error occurred while looking up your username",
         variant: "destructive",
       });
     } finally {
@@ -139,7 +187,7 @@ const Auth = () => {
               </TabsList>
 
               <TabsContent value="signin">
-                {!showForgotPassword ? (
+                {!showForgotPassword && !showForgotEmail ? (
                   <form onSubmit={handleSignIn} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="signin-email">Email</Label>
@@ -176,10 +224,82 @@ const Auth = () => {
                       {loading ? "Signing in..." : "Sign In"}
                     </Button>
                   </form>
+                ) : showForgotEmail ? (
+                  <form onSubmit={handleLookupEmail} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="lookup-username">Username</Label>
+                      <Input
+                        id="lookup-username"
+                        type="text"
+                        placeholder="tree_guardian"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Enter your username and we'll help you find your email address
+                      </p>
+                    </div>
+                    {foundEmail && (
+                      <div className="rounded-md bg-primary/10 p-3 space-y-2">
+                        <p className="text-sm font-medium">Email found:</p>
+                        <p className="text-sm text-muted-foreground">{obfuscatedEmail}</p>
+                        <p className="text-xs text-muted-foreground">
+                          You can now send a password reset link to this email
+                        </p>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      {!foundEmail ? (
+                        <Button type="submit" className="w-full" disabled={loading}>
+                          {loading ? "Looking up..." : "Find My Email"}
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          className="w-full"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setShowForgotEmail(false);
+                            setShowForgotPassword(true);
+                          }}
+                          disabled={loading}
+                        >
+                          Continue to Reset Password
+                        </Button>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="w-full"
+                        onClick={() => {
+                          setShowForgotEmail(false);
+                          setShowForgotPassword(false);
+                          setFoundEmail("");
+                          setObfuscatedEmail("");
+                        }}
+                        disabled={loading}
+                      >
+                        Back to Sign In
+                      </Button>
+                    </div>
+                  </form>
                 ) : (
                   <form onSubmit={handleForgotPassword} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="reset-email">Email</Label>
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="reset-email">Email</Label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowForgotPassword(false);
+                            setShowForgotEmail(true);
+                          }}
+                          className="text-xs text-primary hover:underline"
+                        >
+                          Forgot email?
+                        </button>
+                      </div>
                       <Input
                         id="reset-email"
                         type="email"
@@ -200,7 +320,11 @@ const Auth = () => {
                         type="button"
                         variant="ghost"
                         className="w-full"
-                        onClick={() => setShowForgotPassword(false)}
+                        onClick={() => {
+                          setShowForgotPassword(false);
+                          setFoundEmail("");
+                          setObfuscatedEmail("");
+                        }}
                         disabled={loading}
                       >
                         Back to Sign In
