@@ -6,7 +6,7 @@
 
 ## Inspiration
 
-Urban heat islands are killing newly planted trees in cities across America. While living in Durham, NC, we saw communities plant trees with good intentions, but without ongoing care, many died within their first year. We were inspired to create a solution that combines technology, gamification, and community action to solve this problem. By making tree care fun and rewarding, we can mobilize citizens to become active guardians of their urban forest, fighting climate change one tree at a time.
+Urban heat islands are killing newly planted trees in cities across America. While living in Durham, NC, we saw communities plant trees with good intentions, but without ongoing care, many died within their first year. We were inspired to create a solution that combines technology, gamification, and community action to solve this problem. By making tree care fun and rewarding, we can mobilize citizens to become active participants in the fight against climate change, one tree at a time.
 
 ## What it does
 
@@ -18,8 +18,6 @@ Tamagotree is a gamified tree care platform that turns urban tree maintenance in
 - **Connect with friends** to collaborate on tree care tasks
 - **Track progress** through achievements, levels, and leaderboards
 - **Combat urban heat** by ensuring consistent care for vulnerable new trees
-
-The app uses real environmental data (vapor pressure deficit, temperature forecasts) to schedule watering when trees need it most, preventing the all-too-common fate of dying from neglect in their critical first year.
 
 ## How we built it
 
@@ -53,7 +51,7 @@ We built Tomagotree using a modern full-stack approach with **Claude Code** as o
 
 ## Challenges we ran into
 
-1. **Decoration Position Persistence** - Our biggest challenge was getting decoration positions to save reliably. Initially, decorations would reset to (0,0) on page reload. After multiple debugging attempts, we discovered the root cause: missing UPDATE policies in Row Level Security. This taught us the importance of thorough RLS policy coverage.
+1. **Decoration Position Persistence** - One challenge was getting decoration positions to save reliably. Initially, decorations would reset to (0,0) on page reload. After multiple debugging attempts, we discovered the root cause: missing UPDATE policies in Row Level Security. This taught us the importance of thorough RLS policy coverage.
 
 2. **Age Calculation Architecture** - We initially tried storing tree age as a static database column, but keeping it updated proved complex. We pivoted to dynamic calculation from the `created_at` timestamp, which eliminated the need for cron jobs or triggers.
 
@@ -66,17 +64,11 @@ We built Tomagotree using a modern full-stack approach with **Claude Code** as o
 6. **Mobile Touch Events** - Making drag-and-drop decorations work on both desktop and mobile required implementing separate mouse and touch event handlers with consistent behavior.
 
 ## Accomplishments that we're proud of
-
-- **Real Environmental Impact** - Built a system that addresses actual urban forestry challenges using VPD and temperature data
 - **Complete Feature Set** - Delivered a fully functional app with 9 major feature categories in record time
 - **Pixel-Perfect Decorations** - Successfully implemented drag-and-drop decoration system with auto-save and responsive positioning
-- **Robust Database Design** - Created 15+ tables with proper relationships, constraints, and RLS policies
-- **30+ Achievements** - Designed a comprehensive achievement system that rewards various user behaviors
 - **Friend Collaboration** - Built a complete social system including profiles, friend requests, and collaborative quests
 - **Polished UI/UX** - Crafted an intuitive, visually appealing interface with smooth animations and responsive design
 - **Performance Optimizations** - Implemented debouncing, lazy loading, and optimistic updates for snappy user experience
-- **Comprehensive Documentation** - Created detailed README, deployment guides, and schema documentation
-- **Zero Major Bugs** - Through careful testing and AI-assisted debugging, we achieved a stable release
 
 ## What we learned
 
@@ -85,43 +77,19 @@ We built Tomagotree using a modern full-stack approach with **Claude Code** as o
 - The power of percentage-based positioning for responsive drag-and-drop interfaces
 - Best practices for debounced auto-save to balance UX and performance
 - How to structure complex database schemas with proper foreign keys and constraints
-- The importance of optimistic UI updates for perceived performance
 - Image processing techniques for pixel art and sprite extraction
-
-**Development Process:**
-- Claude Code can dramatically accelerate development when given clear requirements
-- MCP servers provide powerful integrations for database and deployment operations
-- Breaking complex features into small, tracked tasks prevents oversight
-- Real-time debugging with database logs is invaluable for RLS issues
-- Git commit hygiene matters for collaboration and rollback capabilities
-
-**Product Design:**
-- Gamification works best when rewards align with real-world positive outcomes
-- Photo verification creates accountability while building community trust
-- Social features (friends, leaderboards) drive sustained engagement
-- Visual customization (decorations) creates emotional attachment to trees
-- Progressive disclosure (quests, achievements) maintains long-term interest
-
-**Community Impact:**
-- Technology can bridge the gap between good intentions and sustained action
-- Making environmental action fun and social increases participation
-- Real-time feedback (XP, acorns, levels) motivates continued engagement
-- Local focus (Durham, NC) creates stronger community bonds
 
 ## What's next for Tamagotree
 
 **Short-term (Next Sprint):**
 - **Weather Integration** - Display real-time VPD and temperature data on tree pages
 - **Port to IOS & Android & Push Notifications** - Remind users when their trees need watering and allow them to easily get up and go water them by simply opening an app. 
-- **Tree & Tree Species Recognition** - We are on the verge of being able to implament open source API calls to models that recognize weather the image a user uploads is a tree or not, and further to recognize what speciaies of tree it is and infer useful insights about it based on that: https://universe.roboflow.com/tree-species-identification/tree-species-identification-rjtsb/model/1 
+- **Tree & Tree Species Recognition** - We are on the verge of being able to implement open source API calls to models that recognize weather the image a user uploads is a tree or not, and further to recognize what species of tree it is and infer useful insights about it based on that: https://universe.roboflow.com/tree-species-identification/tree-species-identification-rjtsb/model/1 
 
 **Medium-term (Next Quarter):**
 - **Expand to More Cities** - Scale beyond Durham to other NC cities
-- **More Decorations** - Add seasonal decorations and rare collectibles
-- **Tree Teams** - Form groups to care for multiple trees together
 - **Tree Species Education** - Detailed info about different tree types
 - **Quest Variety** - Add more quest types (fertilizing, mulching, pruning)
-- **In-App Chat** - Let tree caregivers coordinate care schedules
 
 **Long-term (Future Vision):**
 - **National Expansion** - Partner with cities across the US
@@ -131,13 +99,6 @@ We built Tomagotree using a modern full-stack approach with **Claude Code** as o
 - **Sponsor System** - Let businesses sponsor trees and support urban forestry
 - **Educational Partnerships** - Work with schools to teach environmental stewardship
 - **Impact Metrics** - Calculate and display carbon offset, air quality improvements
-
-**Technical Improvements:**
-- Implement progressive web app (PWA) features for offline support
-- Add more comprehensive test coverage (unit, integration, e2e)
-- Optimize image loading with WebP format and lazy loading
-- Implement Redis caching for frequently accessed data
-- Add GraphQL layer for more efficient data fetching
 
 ---
 
@@ -158,42 +119,32 @@ We built Tomagotree using a modern full-stack approach with **Claude Code** as o
 #### **Interactive Map & Tree Discovery**
 - **Real-time Tree Mapping** - View all trees in Durham on an interactive Leaflet map
 - **Geolocation Integration** - Auto-center map on user's current location
-- **Tree Markers** - Color-coded markers showing tree health status
-- **Cluster View** - Trees grouped by proximity for better visualization
-- **Search & Filter** - Find specific trees or filter by status
 
 #### **Tree Adoption System**
 - **Community Trees** - View trees reported by the community
 - **One-Click Adoption** - Adopt unadopted trees with a prominent adopt button
 - **Personal Tree Care** - Only adopted trees can be decorated and earn rewards
 - **Multi-Tree Management** - Users can adopt and care for multiple trees
-- **Adoption Status Badge** - Clear visual indicators for adopted vs available trees
 
 #### **Tree Decorations Shop**
 - **Pixel Art Decorations** - 5 unique decorations (Whale, Scissors, Globe, Bow, Sun)
-- **Category Shopping** - Organized by decoration type (animals, tools, objects, accessories, nature)
 - **Acorn Currency** - Purchase decorations using earned acorns
 - **Ownership Tracking** - Keep inventory of purchased decorations
 - **Drag-and-Drop Placement** - Position decorations anywhere on tree photos
-- **Real-time Auto-Save** - Positions saved continuously with debouncing
-- **Mobile-Friendly** - Touch support for mobile devices
 
 #### **Tree Photo Management**
 - **Photo Upload** - Capture and upload tree photos
 - **Photo Storage** - Secure storage via Supabase Storage
 - **Decoration Overlay** - Decorations appear on tree photos
-- **Interactive Photo View** - Drag decorations to reposition
-- **Photo History** - Track tree growth over time
 
 #### **Daily Quest System**
-- **Daily Care Tasks** - 3 rotating daily quests:
+- **Daily Care Tasks** - 3 daily quests:
   - Morning Dew - Water your tree
   - Petal Performer - Sing to your sapling
   - Leaf Collector - Clean up falling branches/leaves
 - **18-Hour Reset** - New quests every 18 hours after completion
 - **Photo Verification** - Upload photos to prove task completion
 - **Reward System** - Earn Acorns, XP, and BP for completing quests
-- **Progress Tracking** - Visual indicators for quest completion
 - **Friend Tasks** - Request friends to help with your tree care
 
 #### **Social Features**
@@ -217,7 +168,6 @@ We built Tomagotree using a modern full-stack approach with **Claude Code** as o
   - Master Gardener - Complete daily tasks
 - **Guardian Ranks** - Progress through ranks as you level up
 - **Health Tracking** - Monitor tree health percentage (0-100%)
-- **Tree Age Tracking** - Automatically calculated from creation date
 
 #### **Dashboard & Profile**
 - **Personal Dashboard** - Central hub with map view and quick actions
@@ -235,7 +185,6 @@ We built Tomagotree using a modern full-stack approach with **Claude Code** as o
 - **Settings** - Customize notifications and preferences
 
 #### **Community Features**
-- **Public Tree Reporting** - Anyone can report trees in the community
 - **Tree Health Reporting** - Report issues with trees
 - **Collaborative Care** - Friends can help with tree care tasks
 - **Neighborhood View** - See trees in your area
@@ -245,21 +194,7 @@ We built Tomagotree using a modern full-stack approach with **Claude Code** as o
 #### **Authentication & Security**
 - **Email/Password Auth** - Secure authentication via Supabase Auth
 - **Password Reset** - Email-based password recovery
-- **Row Level Security (RLS)** - Database-level security policies
 - **Secure Storage** - Protected file uploads with access policies
-
-#### **Responsive Design**
-- **Mobile-First** - Optimized for phones and tablets
-- **Desktop Support** - Full-featured desktop experience
-- **Touch Gestures** - Drag-and-drop works on touch devices
-- **Adaptive Layouts** - Responsive grid systems
-
-#### **Performance**
-- **Lazy Loading** - Images and components load on demand
-- **Optimistic Updates** - UI updates before server confirmation
-- **Debounced Saves** - Reduced database calls for position updates
-- **Image Optimization** - Compressed and cached images
-- **Code Splitting** - Reduced initial bundle size
 
 ---
 
