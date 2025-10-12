@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sprout, Droplet, Trophy, Map } from "lucide-react";
-import heroImage from "@/assets/hero-banner.jpg";
+import heroImage from "@/assets/hero-background.png";
 
 const Index = () => {
   return (
