@@ -26,9 +26,10 @@ interface TreeDecorationsProps {
   treeId: string;
   isOwner: boolean;
   userId: string | null;
+  onDecorationsChange?: () => void;
 }
 
-export const TreeDecorations = ({ treeId, isOwner, userId }: TreeDecorationsProps) => {
+export const TreeDecorations = ({ treeId, isOwner, userId, onDecorationsChange }: TreeDecorationsProps) => {
   const { toast } = useToast();
   const [placedDecorations, setPlacedDecorations] = useState<PlacedDecoration[]>([]);
   const [ownedDecorations, setOwnedDecorations] = useState<Decoration[]>([]);
@@ -94,10 +95,13 @@ export const TreeDecorations = ({ treeId, isOwner, userId }: TreeDecorationsProp
 
       toast({
         title: "Decoration Added!",
-        description: "Your decoration has been added to the tree.",
+        description: "Your decoration has been added to the tree. Position it on the tree photo above!",
       });
 
       await fetchDecorations();
+      if (onDecorationsChange) {
+        onDecorationsChange();
+      }
       setDialogOpen(false);
     } catch (error) {
       console.error("Error adding decoration:", error);

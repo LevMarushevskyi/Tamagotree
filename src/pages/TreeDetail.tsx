@@ -41,6 +41,7 @@ import { checkLevelUp, calculateLevelProgress } from "@/utils/xpCalculations";
 import { calculateTreeAgeDays } from "@/utils/ageCalculations";
 import { FriendTaskRequest } from "@/components/FriendTaskRequest";
 import { TreeDecorations } from "@/components/TreeDecorations";
+import { TreePhotoWithDecorations } from "@/components/TreePhotoWithDecorations";
 
 interface Tree {
   name: string;
@@ -106,6 +107,7 @@ const TreeDetail = () => {
   const [questPhotoPreview, setQuestPhotoPreview] = useState<string | null>(null);
   const [isCompletingQuest, setIsCompletingQuest] = useState(false);
   const [pendingRequests, setPendingRequests] = useState<Record<string, any>>({});
+  const [placedDecorations, setPlacedDecorations] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -136,6 +138,7 @@ const TreeDetail = () => {
   useEffect(() => {
     if (treeId) {
       fetchTreeDetails();
+      fetchDecorations();
     }
   }, [treeId]);
 
@@ -166,6 +169,61 @@ const TreeDetail = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDecorations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("tree_decorations")
+        .select(`
+          id,
+          decoration_id,
+          position_x,
+          position_y,
+          decoration:decorations(id, name, display_name, image_url)
+        `)
+        .eq("tree_id", treeId);
+
+      if (error) throw error;
+      setPlacedDecorations(data || []);
+    } catch (error) {
+      console.error("Error fetching decorations:", error);
+    }
+  };
+
+  const handleDecorationMove = (decorationId: string, x: number, y: number) => {
+    setPlacedDecorations(prev =>
+      prev.map(d =>
+        d.id === decorationId
+          ? { ...d, position_x: x, position_y: y }
+          : d
+      )
+    );
+  };
+
+  const handleDecorationRemove = async (decorationId: string) => {
+    try {
+      const { error } = await supabase
+        .from("tree_decorations")
+        .delete()
+        .eq("id", decorationId);
+
+      if (error) throw error;
+
+      setPlacedDecorations(prev => prev.filter(d => d.id !== decorationId));
+
+      toast({
+        title: "Decoration Removed",
+        description: "The decoration has been removed from the tree.",
+      });
+    } catch (error) {
+      console.error("Error removing decoration:", error);
+      toast({
+        title: "Failed to Remove",
+        description: "Could not remove decoration. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -818,14 +876,17 @@ const TreeDetail = () => {
             </div>
           </div>
 
-          {/* Photo Section */}
+          {/* Photo Section with Decorations */}
           {tree.photo_url && (
             <Card>
               <CardContent className="pt-6">
-                <img
-                  src={tree.photo_url}
-                  alt={tree.name}
-                  className="w-full h-auto max-h-96 object-cover rounded-lg shadow-lg"
+                <TreePhotoWithDecorations
+                  photoUrl={tree.photo_url}
+                  treeName={tree.name}
+                  placedDecorations={placedDecorations}
+                  isOwner={isOwner}
+                  onDecorationMove={handleDecorationMove}
+                  onDecorationRemove={handleDecorationRemove}
                 />
               </CardContent>
             </Card>
@@ -1063,6 +1124,7 @@ const TreeDetail = () => {
             treeId={treeId!}
             isOwner={isOwner}
             userId={currentUser?.id || null}
+            onDecorationsChange={fetchDecorations}
           />
         </div>
       </main>
