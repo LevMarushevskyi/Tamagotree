@@ -633,7 +633,7 @@ const Profile = () => {
                     <div
                       key={tree.id}
                       className="p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
-                      onClick={() => navigate(`/map?tree=${tree.id}`)}
+                      onClick={() => navigate(`/tree/${tree.id}`)}
                     >
                       {tree.photo_url && (
                         <img
