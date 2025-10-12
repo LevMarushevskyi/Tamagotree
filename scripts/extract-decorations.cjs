@@ -18,12 +18,12 @@ const COLS = 2;
 const ROWS = 3;
 
 const decorationNames = [
-  'leaf-green',
-  'leaf-yellow',
-  'berry-red',
-  'berry-blue',
-  'flower-pink',
-  'flower-purple'
+  'whale',
+  'scissors',
+  'globe',
+  'bow',
+  'sun',
+  null // 6th sprite not used
 ];
 
 async function extractSprites() {
@@ -39,23 +39,27 @@ async function extractSprites() {
     for (let col = 0; col < COLS; col++) {
       const left = col * SPRITE_SIZE;
       const top = row * SPRITE_SIZE;
-      const name = decorationNames[index] || `decoration-${index}`;
+      const name = decorationNames[index];
 
-      console.log(`Extracting sprite ${index + 1}: ${name} at (${left}, ${top})`);
+      if (name) {
+        console.log(`Extracting sprite ${index + 1}: ${name} at (${left}, ${top})`);
 
-      await sharp(inputImage)
-        .extract({
-          left: left,
-          top: top,
-          width: SPRITE_SIZE,
-          height: SPRITE_SIZE
-        })
-        .resize(SPRITE_SIZE * SCALE_FACTOR, SPRITE_SIZE * SCALE_FACTOR, {
-          kernel: 'nearest', // Use nearest neighbor to preserve pixel art style
-        })
-        .toFile(path.join(outputDir, `${name}.png`));
+        await sharp(inputImage)
+          .extract({
+            left: left,
+            top: top,
+            width: SPRITE_SIZE,
+            height: SPRITE_SIZE
+          })
+          .resize(SPRITE_SIZE * SCALE_FACTOR, SPRITE_SIZE * SCALE_FACTOR, {
+            kernel: 'nearest', // Use nearest neighbor to preserve pixel art style
+          })
+          .toFile(path.join(outputDir, `${name}.png`));
 
-      console.log(`✓ Saved ${name}.png (${SPRITE_SIZE * SCALE_FACTOR}x${SPRITE_SIZE * SCALE_FACTOR})`);
+        console.log(`✓ Saved ${name}.png (${SPRITE_SIZE * SCALE_FACTOR}x${SPRITE_SIZE * SCALE_FACTOR})`);
+      } else {
+        console.log(`Skipping sprite ${index + 1} at (${left}, ${top})`);
+      }
       index++;
     }
   }
