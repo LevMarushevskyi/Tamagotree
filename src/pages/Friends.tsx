@@ -50,6 +50,9 @@ const Friends = () => {
   const [pendingRequests, setPendingRequests] = useState<FriendWithProfile[]>([]);
   const [sentRequests, setSentRequests] = useState<FriendWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sendingRequestTo, setSendingRequestTo] = useState<string | null>(null);
+  const [acceptingRequest, setAcceptingRequest] = useState<string | null>(null);
+  const [rejectingRequest, setRejectingRequest] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -155,9 +158,69 @@ const Friends = () => {
   };
 
   const sendFriendRequest = async (friendId: string) => {
-    if (!user) return;
+    if (!user || sendingRequestTo) return;
 
+    setSendingRequestTo(friendId);
     try {
+      // Check if any friendship already exists (in either direction)
+      const { data: existingFriendships, error: checkError } = await supabase
+        .from("friendships")
+        .select("id, user_id, friend_id, status")
+        .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
+
+      if (checkError) throw checkError;
+
+      // If any friendship exists, handle it appropriately
+      if (existingFriendships && existingFriendships.length > 0) {
+        const existing = existingFriendships[0];
+
+        // If they already sent you a request, accept it instead
+        if (existing.user_id === friendId && existing.friend_id === user.id && existing.status === "pending") {
+          await acceptFriendRequest(existing.id, friendId);
+          return;
+        }
+
+        // If already friends
+        if (existing.status === "accepted") {
+          toast({
+            title: "Already Friends",
+            description: "You are already friends with this user.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // If you already sent a request
+        if (existing.user_id === user.id && existing.status === "pending") {
+          toast({
+            title: "Request Already Sent",
+            description: "You have already sent a friend request to this user.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // If previously rejected, update to pending
+        if (existing.status === "rejected") {
+          const { error: updateError } = await supabase
+            .from("friendships")
+            .update({ status: "pending", updated_at: new Date().toISOString() })
+            .eq("id", existing.id);
+
+          if (updateError) throw updateError;
+
+          toast({
+            title: "Friend Request Sent",
+            description: "Your friend request has been sent successfully.",
+          });
+
+          fetchSentRequests();
+          setSearchResults(searchResults.filter((p) => p.id !== friendId));
+          return;
+        }
+      }
+
+      // No existing friendship found, create new request
       const { error } = await supabase.from("friendships").insert({
         user_id: user.id,
         friend_id: friendId,
@@ -182,6 +245,8 @@ const Friends = () => {
         description: error.message || "Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setSendingRequestTo(null);
     }
   };
 
@@ -289,8 +354,9 @@ const Friends = () => {
   };
 
   const acceptFriendRequest = async (friendshipId: string, friendId: string) => {
-    if (!user) return;
+    if (!user || acceptingRequest) return;
 
+    setAcceptingRequest(friendshipId);
     try {
       // Update the existing friendship to accepted
       const { error: updateError } = await supabase
@@ -347,10 +413,15 @@ const Friends = () => {
         description: error.message || "Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setAcceptingRequest(null);
     }
   };
 
   const rejectFriendRequest = async (friendshipId: string) => {
+    if (rejectingRequest) return;
+
+    setRejectingRequest(friendshipId);
     try {
       const { error } = await supabase
         .from("friendships")
@@ -372,6 +443,8 @@ const Friends = () => {
         description: error.message || "Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setRejectingRequest(null);
     }
   };
 
@@ -404,9 +477,15 @@ const Friends = () => {
   };
 
   const getFriendshipStatus = (profileId: string): string | null => {
+    // Check if already friends (in either direction)
     if (friends.some((f) => f.friend_id === profileId)) return "friends";
+
+    // Check if we sent them a request
     if (sentRequests.some((f) => f.friend_id === profileId)) return "pending";
+
+    // Check if they sent us a request
     if (pendingRequests.some((f) => f.user_id === profileId)) return "incoming";
+
     return null;
   };
 
@@ -508,9 +587,10 @@ const Friends = () => {
                               <Button
                                 size="sm"
                                 onClick={() => sendFriendRequest(profile.id)}
+                                disabled={sendingRequestTo === profile.id}
                               >
                                 <UserPlus className="w-4 h-4 mr-2" />
-                                Add Friend
+                                {sendingRequestTo === profile.id ? "Sending..." : "Add Friend"}
                               </Button>
                             )}
                           </CardContent>
@@ -631,17 +711,19 @@ const Friends = () => {
                             <Button
                               size="sm"
                               onClick={() => acceptFriendRequest(friendship.id, friendship.user_id)}
+                              disabled={acceptingRequest === friendship.id || rejectingRequest === friendship.id}
                             >
                               <Check className="w-4 h-4 mr-2" />
-                              Accept
+                              {acceptingRequest === friendship.id ? "Accepting..." : "Accept"}
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => rejectFriendRequest(friendship.id)}
+                              disabled={acceptingRequest === friendship.id || rejectingRequest === friendship.id}
                             >
                               <X className="w-4 h-4 mr-2" />
-                              Reject
+                              {rejectingRequest === friendship.id ? "Rejecting..." : "Reject"}
                             </Button>
                           </div>
                         </CardContent>
