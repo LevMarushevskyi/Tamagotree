@@ -4,6 +4,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, TreePine, MapPin, Heart, Star, Sprout, Clock, Edit, Trash2, User as UserIcon, Target } from "lucide-react";
+import { ArrowLeft, TreePine, MapPin, Heart, Star, Sprout, Clock, Edit, Trash2, User as UserIcon, Target, Flag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 
@@ -49,6 +67,10 @@ const TreeDetail = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   useEffect(() => {
     // Get current user
@@ -158,6 +180,56 @@ const TreeDetail = () => {
     navigate(`/tree/${treeId}/edit`);
   };
 
+  const handleReportIssue = async () => {
+    if (!currentUser || !treeId) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to report an issue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!reportReason) {
+      toast({
+        title: "Reason Required",
+        description: "Please select a reason for the report.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmittingReport(true);
+    try {
+      const { error } = await supabase.from("tree_reports").insert({
+        tree_id: treeId,
+        reporter_id: currentUser.id,
+        reason: reportReason,
+        details: reportDetails.trim() || null,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Report Submitted",
+        description: "Thank you for helping keep our tree data accurate. We'll review this report soon.",
+      });
+
+      setReportDialogOpen(false);
+      setReportReason("");
+      setReportDetails("");
+    } catch (error: any) {
+      console.error("Error submitting report:", error);
+      toast({
+        title: "Report Failed",
+        description: error.message || "Failed to submit report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
   // Check if current user is the owner of this tree
   const isOwner = currentUser && tree?.user_id === currentUser.id;
 
@@ -211,9 +283,9 @@ const TreeDetail = () => {
             <TreePine className="w-5 h-5 text-primary" />
           </div>
 
-          {/* Right: Edit/Delete buttons (if owner) and Profile */}
+          {/* Right: Edit/Delete buttons (if owner) OR Report Issue (if not owner), and Profile */}
           <div className="flex items-center gap-2">
-            {isOwner && (
+            {isOwner ? (
               <>
                 <Button variant="outline" size="sm" onClick={handleEdit}>
                   <Edit className="w-4 h-4 sm:mr-2" />
@@ -246,6 +318,68 @@ const TreeDetail = () => {
                   </AlertDialogContent>
                 </AlertDialog>
               </>
+            ) : (
+              currentUser && (
+                <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Flag className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Report Issue</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Report an Issue</DialogTitle>
+                      <DialogDescription>
+                        Help us maintain accurate tree data by reporting any issues you've noticed.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="reason">Issue Type *</Label>
+                        <Select value={reportReason} onValueChange={setReportReason}>
+                          <SelectTrigger id="reason">
+                            <SelectValue placeholder="Select an issue type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="fake">Fake Tree - This tree doesn't exist</SelectItem>
+                            <SelectItem value="duplicate">Duplicate - This tree is already listed</SelectItem>
+                            <SelectItem value="wrong_location">Wrong Location - Incorrect coordinates</SelectItem>
+                            <SelectItem value="incorrect_info">Incorrect Information - Wrong species, name, etc.</SelectItem>
+                            <SelectItem value="inappropriate">Inappropriate Content - Offensive name or photo</SelectItem>
+                            <SelectItem value="other">Other Issue</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="details">Additional Details (Optional)</Label>
+                        <Textarea
+                          id="details"
+                          placeholder="Provide any additional information that might help us review this report..."
+                          value={reportDetails}
+                          onChange={(e) => setReportDetails(e.target.value)}
+                          rows={4}
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setReportDialogOpen(false)}
+                        disabled={isSubmittingReport}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleReportIssue}
+                        disabled={isSubmittingReport || !reportReason}
+                      >
+                        {isSubmittingReport ? "Submitting..." : "Submit Report"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )
             )}
 
             {/* Profile Picture */}
