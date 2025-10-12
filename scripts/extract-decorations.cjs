@@ -18,12 +18,12 @@ const COLS = 2;
 const ROWS = 3;
 
 const decorationNames = [
-  'whale',
-  'scissors',
-  'globe',
-  'bow',
-  'sun',
-  null // 6th sprite not used
+  'bow',      // was whale
+  'sun',      // was scissors
+  'whale',    // was globe
+  'scissors', // was bow
+  'globe',    // was sun
+  null        // 6th sprite not used
 ];
 
 async function extractSprites() {
