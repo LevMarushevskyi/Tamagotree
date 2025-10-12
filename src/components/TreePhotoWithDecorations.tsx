@@ -39,6 +39,7 @@ export const TreePhotoWithDecorations = ({
   const { toast } = useToast();
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [pendingPosition, setPendingPosition] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent, decoration: PlacedDecoration) => {
@@ -69,6 +70,9 @@ export const TreePhotoWithDecorations = ({
     const percentX = Math.max(0, Math.min(100, (x / rect.width) * 100));
     const percentY = Math.max(0, Math.min(100, (y / rect.height) * 100));
 
+    // Store pending position
+    setPendingPosition({ x: percentX, y: percentY });
+
     // Update immediately for smooth dragging
     const decoration = placedDecorations.find(d => d.id === draggingId);
     if (decoration && onDecorationMove) {
@@ -77,37 +81,35 @@ export const TreePhotoWithDecorations = ({
   };
 
   const handleMouseUp = async () => {
-    if (!draggingId) return;
+    if (!draggingId || !pendingPosition) return;
 
-    const decoration = placedDecorations.find(d => d.id === draggingId);
-    if (decoration) {
-      try {
-        // Save position to database
-        const { error } = await supabase
-          .from("tree_decorations")
-          .update({
-            position_x: Math.round(decoration.position_x),
-            position_y: Math.round(decoration.position_y),
-          })
-          .eq("id", draggingId);
+    try {
+      // Save position to database using the pending position values
+      const { error } = await supabase
+        .from("tree_decorations")
+        .update({
+          position_x: Math.round(pendingPosition.x),
+          position_y: Math.round(pendingPosition.y),
+        })
+        .eq("id", draggingId);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        toast({
-          title: "Position Saved",
-          description: "Decoration position updated!",
-        });
-      } catch (error) {
-        console.error("Error saving decoration position:", error);
-        toast({
-          title: "Save Failed",
-          description: "Could not save decoration position.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Position Saved",
+        description: "Decoration position updated!",
+      });
+    } catch (error) {
+      console.error("Error saving decoration position:", error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save decoration position.",
+        variant: "destructive",
+      });
     }
 
     setDraggingId(null);
+    setPendingPosition(null);
   };
 
   const handleTouchStart = (e: React.TouchEvent, decoration: PlacedDecoration) => {
@@ -138,6 +140,9 @@ export const TreePhotoWithDecorations = ({
 
     const percentX = Math.max(0, Math.min(100, (x / rect.width) * 100));
     const percentY = Math.max(0, Math.min(100, (y / rect.height) * 100));
+
+    // Store pending position
+    setPendingPosition({ x: percentX, y: percentY });
 
     const decoration = placedDecorations.find(d => d.id === draggingId);
     if (decoration && onDecorationMove) {
