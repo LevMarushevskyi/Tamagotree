@@ -24,6 +24,7 @@ import { ArrowLeft, Award, TreePine, Trophy, Sprout, Star, Trash2, Settings as S
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import { checkLevelUp, calculateLevelProgress } from "@/utils/xpCalculations";
+import { checkTreeAchievements, checkAcornAchievements, checkLeaderboardAchievements } from "@/utils/achievementChecks";
 
 interface Profile {
   username: string;
@@ -147,6 +148,13 @@ const Profile = () => {
       loadSettings();
     }
   }, [user]);
+
+  // Check achievements after data is loaded
+  useEffect(() => {
+    if (user && profile && leaderboardRanks) {
+      checkAllAchievements();
+    }
+  }, [user, profile?.acorns, leaderboardRanks.acorns]);
 
   // Load settings from localStorage
   const loadSettings = () => {
@@ -302,6 +310,30 @@ const Profile = () => {
       setUserAchievements(userAch || []);
     } catch (error) {
       console.error("Error fetching achievements:", error);
+    }
+  };
+
+  const checkAllAchievements = async () => {
+    if (!user) return;
+
+    try {
+      // Check tree-based achievements
+      await checkTreeAchievements(user.id);
+
+      // Check acorn-based achievements
+      if (profile) {
+        await checkAcornAchievements(user.id, profile.acorns);
+      }
+
+      // Check leaderboard achievements
+      if (leaderboardRanks.acorns) {
+        await checkLeaderboardAchievements(user.id, leaderboardRanks.acorns);
+      }
+
+      // Refresh achievements to show newly unlocked ones
+      await fetchAchievements();
+    } catch (error) {
+      console.error("Error checking achievements:", error);
     }
   };
 
@@ -624,6 +656,9 @@ const Profile = () => {
             description: `${quest.name} completed! You earned ${acornReward} acorns and ${xpReward} XP!`,
           });
         }
+
+        // Check for newly earned achievements
+        await checkAllAchievements();
       }
     } catch (error) {
       console.error("Error auto-completing weekly quest:", error);
