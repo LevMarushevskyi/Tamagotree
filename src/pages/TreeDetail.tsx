@@ -508,11 +508,12 @@ const TreeDetail = () => {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Sprout className="w-4 h-4 text-green-500" />
-                  XP Earned
+                  Bloom Points
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold">{tree.xp_earned}</p>
+                <p className="text-sm text-muted-foreground">BP</p>
               </CardContent>
             </Card>
 
@@ -603,7 +604,7 @@ const TreeDetail = () => {
                   <Target className="w-5 h-5 text-purple-500" />
                   Quests
                 </CardTitle>
-                <CardDescription>Complete quests to earn XP and level up your tree</CardDescription>
+                <CardDescription>Complete quests to earn Bloom Points and level up your tree</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-center py-8 text-muted-foreground">

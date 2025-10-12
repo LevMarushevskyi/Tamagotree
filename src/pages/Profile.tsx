@@ -671,7 +671,7 @@ const Profile = () => {
                       </div>
                       <div className="mt-2 text-xs text-muted-foreground">
                         <Star className="w-3 h-3 inline mr-1" />
-                        {tree.xp_earned} XP earned
+                        {tree.xp_earned} BP earned
                       </div>
                     </div>
                   ))}
