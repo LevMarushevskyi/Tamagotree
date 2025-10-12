@@ -1172,8 +1172,8 @@ const TreeDetail = () => {
             </Card>
           )}
 
-          {/* Decorations Section - Only show for adopted trees */}
-          {tree.user_id && (
+          {/* Decorations Section - Only show for tree owners */}
+          {isOwner && (
             <TreeDecorations
               treeId={treeId!}
               isOwner={isOwner}
