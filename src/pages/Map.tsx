@@ -150,7 +150,7 @@ const Map = () => {
       }
 
       console.log('Inserting tree into database...');
-      const { error } = await supabase.from("trees").insert({
+      const { error } = await supabase.from("tree").insert({
         user_id: wantToAdopt ? user.id : null,
         name: treeName.trim(),
         species: species || null,

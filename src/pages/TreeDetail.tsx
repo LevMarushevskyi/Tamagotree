@@ -84,7 +84,7 @@ const TreeDetail = () => {
   const fetchTreeDetails = async () => {
     try {
       const { data, error } = await supabase
-        .from("trees")
+        .from("tree")
         .select("name, species, latitude, longitude, photo_url, age_days, health_status, health_percentage, level, xp_earned, created_at, updated_at, user_id")
         .eq("id", treeId)
         .single();
@@ -130,7 +130,7 @@ const TreeDetail = () => {
 
       // Delete the tree from database
       const { error } = await supabase
-        .from('trees')
+        .from('tree')
         .delete()
         .eq('id', treeId);
 

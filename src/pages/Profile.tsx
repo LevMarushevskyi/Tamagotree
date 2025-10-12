@@ -200,7 +200,7 @@ const Profile = () => {
 
     try {
       const { count, error } = await supabase
-        .from("trees")
+        .from("tree")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id);
 
@@ -216,7 +216,7 @@ const Profile = () => {
 
     try {
       const { data, error } = await supabase
-        .from("trees")
+        .from("tree")
         .select("id, name, species, age_days, health_status, photo_url, xp_earned, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });

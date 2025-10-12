@@ -48,7 +48,7 @@ const TreeEdit = () => {
     setFetching(true);
     try {
       const { data, error } = await supabase
-        .from("trees")
+        .from("tree")
         .select("name, species, latitude, longitude, photo_url, user_id")
         .eq("id", treeId)
         .single();
@@ -209,7 +209,7 @@ const TreeEdit = () => {
       }
 
       console.log('Updating tree in database...');
-      const { error } = await supabase.from("trees").update({
+      const { error } = await supabase.from("tree").update({
         name: treeName.trim(),
         species: species || null,
         latitude: parseFloat(latitude),

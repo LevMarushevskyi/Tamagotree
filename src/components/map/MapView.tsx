@@ -79,7 +79,7 @@ const MapView = ({ onLocationUpdate }: MapViewProps) => {
     const fetchTrees = async () => {
       try {
         const { data, error } = await supabase
-          .from("trees")
+          .from("tree")
           .select("id, name, species, latitude, longitude, health_status, health_percentage, level, photo_url, xp_earned, age_days, created_at")
           .order("created_at", { ascending: false });
 

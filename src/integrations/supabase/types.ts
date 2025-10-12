@@ -149,7 +149,7 @@ export type Database = {
             foreignKeyName: "tasks_tree_id_fkey"
             columns: ["tree_id"]
             isOneToOne: false
-            referencedRelation: "trees"
+            referencedRelation: "tree"
             referencedColumns: ["id"]
           },
         ]
@@ -205,13 +205,15 @@ export type Database = {
         }
         Relationships: []
       }
-      trees: {
+      tree: {
         Row: {
           age_days: number
           created_at: string
+          health_percentage: number
           health_status: string
           id: string
           latitude: number
+          level: number
           longitude: number
           name: string
           photo_url: string | null
@@ -223,9 +225,11 @@ export type Database = {
         Insert: {
           age_days?: number
           created_at?: string
+          health_percentage?: number
           health_status?: string
           id?: string
           latitude: number
+          level?: number
           longitude: number
           name: string
           photo_url?: string | null
@@ -237,9 +241,11 @@ export type Database = {
         Update: {
           age_days?: number
           created_at?: string
+          health_percentage?: number
           health_status?: string
           id?: string
           latitude?: number
+          level?: number
           longitude?: number
           name?: string
           photo_url?: string | null
