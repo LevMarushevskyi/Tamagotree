@@ -99,7 +99,12 @@ const Map = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    console.log('Form submitted, user:', user);
+
+    if (!user) {
+      console.error('No user found');
+      return;
+    }
 
     // Validate tree name
     const treeNameValidation = validateTreeName(treeName);
@@ -113,12 +118,14 @@ const Map = () => {
     }
 
     setLoading(true);
+    console.log('Starting tree creation, photo file:', photoFile);
 
     try {
       let photoUrl: string | null = null;
 
       // Upload photo if provided
       if (photoFile) {
+        console.log('Uploading photo...');
         setIsUploadingPhoto(true);
         const fileExt = photoFile.name.split(".").pop();
         const filePath = `${user.id}/tree-${Date.now()}.${fileExt}`;
@@ -127,7 +134,10 @@ const Map = () => {
           .from("tree-photos")
           .upload(filePath, photoFile, { upsert: true });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Photo upload error:', uploadError);
+          throw uploadError;
+        }
 
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
@@ -135,9 +145,11 @@ const Map = () => {
           .getPublicUrl(filePath);
 
         photoUrl = publicUrl;
+        console.log('Photo uploaded successfully:', photoUrl);
         setIsUploadingPhoto(false);
       }
 
+      console.log('Inserting tree into database...');
       const { error } = await supabase.from("trees").insert({
         user_id: wantToAdopt ? user.id : null,
         name: treeName.trim(),
@@ -152,8 +164,12 @@ const Map = () => {
         photo_url: photoUrl,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database insert error:', error);
+        throw error;
+      }
 
+      console.log('Tree created successfully');
       toast({
         title: wantToAdopt ? "Tree reported and adopted! 🌱" : "Tree reported! 🌱",
         description: wantToAdopt
@@ -163,9 +179,10 @@ const Map = () => {
 
       navigate("/dashboard");
     } catch (error: any) {
+      console.error('Error in handleSubmit:', error);
       toast({
         title: "Failed to report tree",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {

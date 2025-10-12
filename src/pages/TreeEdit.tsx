@@ -148,7 +148,12 @@ const TreeEdit = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !treeId) return;
+    console.log('Edit form submitted, user:', user, 'treeId:', treeId);
+
+    if (!user || !treeId) {
+      console.error('No user or treeId');
+      return;
+    }
 
     // Validate tree name
     const treeNameValidation = validateTreeName(treeName);
@@ -162,18 +167,21 @@ const TreeEdit = () => {
     }
 
     setLoading(true);
+    console.log('Starting tree update, photo file:', photoFile);
 
     try {
       let photoUrl = currentPhotoUrl;
 
       // Upload new photo if provided
       if (photoFile) {
+        console.log('Uploading new photo...');
         setIsUploadingPhoto(true);
 
         // Delete old photo if it exists
         if (currentPhotoUrl) {
           const oldPhotoPath = currentPhotoUrl.split('/tree-photos/')[1];
           if (oldPhotoPath) {
+            console.log('Deleting old photo:', oldPhotoPath);
             await supabase.storage.from("tree-photos").remove([oldPhotoPath]);
           }
         }
@@ -185,7 +193,10 @@ const TreeEdit = () => {
           .from("tree-photos")
           .upload(filePath, photoFile, { upsert: true });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('Photo upload error:', uploadError);
+          throw uploadError;
+        }
 
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
@@ -193,9 +204,11 @@ const TreeEdit = () => {
           .getPublicUrl(filePath);
 
         photoUrl = publicUrl;
+        console.log('Photo uploaded successfully:', photoUrl);
         setIsUploadingPhoto(false);
       }
 
+      console.log('Updating tree in database...');
       const { error } = await supabase.from("trees").update({
         name: treeName.trim(),
         species: species || null,
@@ -204,8 +217,12 @@ const TreeEdit = () => {
         photo_url: photoUrl,
       }).eq("id", treeId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database update error:', error);
+        throw error;
+      }
 
+      console.log('Tree updated successfully');
       toast({
         title: "Tree Updated!",
         description: "Your tree information has been updated successfully.",
@@ -213,9 +230,10 @@ const TreeEdit = () => {
 
       navigate(`/tree/${treeId}`);
     } catch (error: any) {
+      console.error('Error in handleSubmit:', error);
       toast({
         title: "Failed to update tree",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
