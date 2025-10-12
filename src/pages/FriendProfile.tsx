@@ -120,14 +120,19 @@ const FriendProfile = () => {
       const { data, error } = await supabase
         .from("user_achievements")
         .select(`
-          id,
-          achievement:achievements(name, description, icon)
+          achievement_id,
+          unlocked_at,
+          achievement:achievements(id, name, description, icon)
         `)
         .eq("user_id", friendId)
         .order("unlocked_at", { ascending: false });
 
       if (error) throw error;
-      setAchievements(data as Achievement[] || []);
+      const formattedData = (data || []).map(item => ({
+        id: item.achievement_id,
+        achievement: item.achievement
+      }));
+      setAchievements(formattedData);
     } catch (error) {
       console.error("Error fetching achievements:", error);
     }
