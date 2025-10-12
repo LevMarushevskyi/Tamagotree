@@ -197,14 +197,34 @@ const Friends = () => {
 
       if (updateError) throw updateError;
 
-      // Create reverse friendship
-      const { error: insertError } = await supabase.from("friendships").insert({
-        user_id: user.id,
-        friend_id: friendId,
-        status: "accepted",
-      });
+      // Check if reverse friendship already exists
+      const { data: existingReverse, error: checkError } = await supabase
+        .from("friendships")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .eq("friend_id", friendId)
+        .maybeSingle();
 
-      if (insertError) throw insertError;
+      if (checkError) throw checkError;
+
+      if (existingReverse) {
+        // Update existing reverse friendship to accepted
+        const { error: updateReverseError } = await supabase
+          .from("friendships")
+          .update({ status: "accepted" })
+          .eq("id", existingReverse.id);
+
+        if (updateReverseError) throw updateReverseError;
+      } else {
+        // Create new reverse friendship
+        const { error: insertError } = await supabase.from("friendships").insert({
+          user_id: user.id,
+          friend_id: friendId,
+          status: "accepted",
+        });
+
+        if (insertError) throw insertError;
+      }
 
       toast({
         title: "Friend Request Accepted",
