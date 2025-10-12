@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, TreePine, MapPin, Heart, Star, Sprout, Clock, Edit, Trash2, User as UserIcon, Target, Flag } from "lucide-react";
+import { ArrowLeft, TreePine, MapPin, Heart, Star, Sprout, Clock, Edit, Trash2, User as UserIcon, Target, Flag, Camera, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 
@@ -95,6 +95,12 @@ const TreeDetail = () => {
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [dailyQuests, setDailyQuests] = useState<UserQuest[]>([]);
   const [loadingQuests, setLoadingQuests] = useState(false);
+  const [questDialogOpen, setQuestDialogOpen] = useState(false);
+  const [selectedQuest, setSelectedQuest] = useState<{ userQuestId: string; quest: Quest } | null>(null);
+  const [questPhoto, setQuestPhoto] = useState<File | null>(null);
+  const [questPhotoPreview, setQuestPhotoPreview] = useState<string | null>(null);
+  const [isCompletingQuest, setIsCompletingQuest] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Get current user
@@ -287,11 +293,73 @@ const TreeDetail = () => {
     navigate(`/tree/${treeId}/edit`);
   };
 
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setQuestPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setQuestPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setQuestPhoto(null);
+    setQuestPhotoPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const openQuestDialog = (userQuestId: string, quest: Quest) => {
+    setSelectedQuest({ userQuestId, quest });
+    setQuestDialogOpen(true);
+  };
+
+  const closeQuestDialog = () => {
+    setQuestDialogOpen(false);
+    setSelectedQuest(null);
+    setQuestPhoto(null);
+    setQuestPhotoPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleCompleteQuest = async (userQuestId: string, quest: Quest) => {
     if (!currentUser || !treeId || !tree) return;
 
+    setIsCompletingQuest(true);
+
     try {
       const now = new Date().toISOString();
+      let photoUrl: string | null = null;
+
+      // Upload photo if provided
+      if (questPhoto) {
+        const fileExt = questPhoto.name.split('.').pop();
+        const fileName = `${currentUser.id}/${treeId}/${userQuestId}_${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('quest-photos')
+          .upload(fileName, questPhoto);
+
+        if (uploadError) {
+          console.error("Photo upload error:", uploadError);
+          toast({
+            title: "Photo Upload Failed",
+            description: "Could not upload photo, but quest will still be completed.",
+            variant: "destructive",
+          });
+        } else {
+          const { data: { publicUrl } } = supabase.storage
+            .from('quest-photos')
+            .getPublicUrl(fileName);
+          photoUrl = publicUrl;
+        }
+      }
 
       // Mark quest as completed
       const { error: questError } = await supabase
@@ -352,9 +420,12 @@ const TreeDetail = () => {
       // Refresh quests
       await fetchDailyQuests();
 
+      // Close dialog
+      closeQuestDialog();
+
       toast({
         title: "Quest Completed!",
-        description: `You earned ${acornReward} acorns, ${bpReward} BP, and ${xpReward} XP!`,
+        description: `You earned ${acornReward} acorns, ${bpReward} BP, and ${xpReward} XP!${photoUrl ? " Photo uploaded successfully!" : ""}`,
       });
     } catch (error) {
       console.error("Error completing quest:", error);
@@ -363,6 +434,8 @@ const TreeDetail = () => {
         description: "Failed to complete quest. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsCompletingQuest(false);
     }
   };
 
@@ -843,7 +916,7 @@ const TreeDetail = () => {
                             <Button
                               size="sm"
                               disabled={isCompleted}
-                              onClick={() => handleCompleteQuest(userQuest.id, quest)}
+                              onClick={() => openQuestDialog(userQuest.id, quest)}
                               className="shrink-0"
                             >
                               {isCompleted ? "Done" : "Complete"}
@@ -859,6 +932,111 @@ const TreeDetail = () => {
           )}
         </div>
       </main>
+
+      {/* Quest Completion Dialog */}
+      <Dialog open={questDialogOpen} onOpenChange={setQuestDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-2xl">{selectedQuest?.quest.icon}</span>
+              Complete Quest: {selectedQuest?.quest.name}
+            </DialogTitle>
+            <DialogDescription>
+              Upload an optional photo of your completed task
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Photo Upload Section */}
+            <div className="space-y-3">
+              <Label htmlFor="quest-photo" className="text-sm font-medium">
+                Photo (Optional)
+              </Label>
+
+              {questPhotoPreview ? (
+                <div className="relative">
+                  <img
+                    src={questPhotoPreview}
+                    alt="Quest preview"
+                    className="w-full h-48 object-cover rounded-lg border"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={handleRemovePhoto}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Click to upload a photo
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Optional: Show proof of your quest completion
+                  </p>
+                </div>
+              )}
+
+              <input
+                ref={fileInputRef}
+                id="quest-photo"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoSelect}
+              />
+            </div>
+
+            {/* Rewards Preview */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Rewards</Label>
+              <div className="flex flex-wrap gap-2">
+                {selectedQuest?.quest.acorn_reward && selectedQuest.quest.acorn_reward > 0 && (
+                  <Badge variant="outline" className="gap-1">
+                    🪙 {selectedQuest.quest.acorn_reward} Acorns
+                  </Badge>
+                )}
+                {selectedQuest?.quest.bp_reward && selectedQuest.quest.bp_reward > 0 && (
+                  <Badge variant="outline" className="gap-1">
+                    🌱 {selectedQuest.quest.bp_reward} BP
+                  </Badge>
+                )}
+                {selectedQuest?.quest.xp_reward && selectedQuest.quest.xp_reward > 0 && (
+                  <Badge variant="outline" className="gap-1">
+                    ⭐ {selectedQuest.quest.xp_reward} XP
+                  </Badge>
+                )}
+                <Badge variant="outline" className="gap-1">
+                  ❤️ +10% Health
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={closeQuestDialog}
+              disabled={isCompletingQuest}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => selectedQuest && handleCompleteQuest(selectedQuest.userQuestId, selectedQuest.quest)}
+              disabled={isCompletingQuest}
+            >
+              {isCompletingQuest ? "Completing..." : "Complete Quest"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
