@@ -12,6 +12,7 @@ import { Sprout, Leaf } from "lucide-react";
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -20,6 +21,11 @@ const Auth = () => {
   const [obfuscatedEmail, setObfuscatedEmail] = useState("");
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check if passwords match and meet requirements
+  const passwordsMatch = password === confirmPassword && confirmPassword !== "";
+  const passwordTooShort = password.length > 0 && password.length < 8;
+  const confirmPasswordTouched = confirmPassword.length > 0;
 
   useEffect(() => {
     // Check if already logged in
@@ -32,6 +38,27 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate password length
+    if (password.length < 8) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 8 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure both passwords are the same",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -366,8 +393,42 @@ const Auth = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      minLength={6}
+                      minLength={8}
+                      className={passwordTooShort ? "border-destructive" : ""}
                     />
+                    {passwordTooShort && (
+                      <p className="text-xs text-destructive">
+                        Password must be at least 8 characters long
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                    <Input
+                      id="signup-confirm-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      minLength={8}
+                      className={
+                        confirmPasswordTouched
+                          ? passwordsMatch
+                            ? "border-green-500"
+                            : "border-destructive"
+                          : ""
+                      }
+                    />
+                    {confirmPasswordTouched && (
+                      <p
+                        className={`text-xs ${
+                          passwordsMatch ? "text-green-600" : "text-destructive"
+                        }`}
+                      >
+                        {passwordsMatch ? "✓ Passwords match" : "✗ Passwords don't match"}
+                      </p>
+                    )}
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Creating account..." : "Create Account"}

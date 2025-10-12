@@ -16,6 +16,11 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Check if passwords match and meet requirements
+  const passwordsMatch = newPassword === confirmPassword && confirmPassword !== "";
+  const passwordTooShort = newPassword.length > 0 && newPassword.length < 8;
+  const confirmPasswordTouched = confirmPassword.length > 0;
+
   useEffect(() => {
     // Check if user has a valid recovery session
     supabase.auth.onAuthStateChange((event, session) => {
@@ -39,19 +44,19 @@ const ResetPassword = () => {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (newPassword !== confirmPassword) {
+    if (newPassword.length < 8) {
       toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords are the same",
+        title: "Password too short",
+        description: "Password must be at least 8 characters long",
         variant: "destructive",
       });
       return;
     }
 
-    if (newPassword.length < 6) {
+    if (newPassword !== confirmPassword) {
       toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters long",
+        title: "Passwords don't match",
+        description: "Please make sure both passwords are the same",
         variant: "destructive",
       });
       return;
@@ -127,8 +132,14 @@ const ResetPassword = () => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
+                  className={passwordTooShort ? "border-destructive" : ""}
                 />
+                {passwordTooShort && (
+                  <p className="text-xs text-destructive">
+                    Password must be at least 8 characters long
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirm Password</Label>
@@ -139,8 +150,24 @@ const ResetPassword = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  minLength={6}
+                  minLength={8}
+                  className={
+                    confirmPasswordTouched
+                      ? passwordsMatch
+                        ? "border-green-500"
+                        : "border-destructive"
+                      : ""
+                  }
                 />
+                {confirmPasswordTouched && (
+                  <p
+                    className={`text-xs ${
+                      passwordsMatch ? "text-green-600" : "text-destructive"
+                    }`}
+                  >
+                    {passwordsMatch ? "✓ Passwords match" : "✗ Passwords don't match"}
+                  </p>
+                )}
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Updating..." : "Update Password"}
