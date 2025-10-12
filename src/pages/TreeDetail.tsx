@@ -38,6 +38,7 @@ import { ArrowLeft, TreePine, MapPin, Heart, Star, Sprout, Clock, Edit, Trash2, 
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import { checkLevelUp, calculateLevelProgress } from "@/utils/xpCalculations";
+import { calculateTreeAgeDays } from "@/utils/ageCalculations";
 import { FriendTaskRequest } from "@/components/FriendTaskRequest";
 
 interface Tree {
@@ -881,7 +882,7 @@ const TreeDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">{tree.age_days}</p>
+                <p className="text-3xl font-bold">{calculateTreeAgeDays(tree.created_at)}</p>
                 <p className="text-sm text-muted-foreground">days</p>
               </CardContent>
             </Card>

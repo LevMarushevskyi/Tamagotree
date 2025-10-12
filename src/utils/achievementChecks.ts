@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { calculateTreeAgeDays } from "./ageCalculations";
 
 interface AchievementCheckResult {
   achievementName: string;
@@ -95,7 +96,7 @@ export const checkTreeAchievements = async (userId: string) => {
     // Get user's tree count
     const { data: trees, error: treeError } = await supabase
       .from("tree")
-      .select("id, level, age_days")
+      .select("id, level, created_at")
       .eq("user_id", userId);
 
     if (treeError || !trees) return;
@@ -117,9 +118,10 @@ export const checkTreeAchievements = async (userId: string) => {
     if (level5Trees.length >= 5) achievementsToCheck.push("Forest Tender");
 
     // Tree maintenance achievements (based on age)
-    const oldestTree = trees.reduce((max, tree) =>
-      tree.age_days > max ? tree.age_days : max, 0
-    );
+    const oldestTree = trees.reduce((max, tree) => {
+      const age = calculateTreeAgeDays(tree.created_at);
+      return age > max ? age : max;
+    }, 0);
     if (oldestTree >= 10) achievementsToCheck.push("Rising Hope");
     if (oldestTree >= 50) achievementsToCheck.push("Grove Guardian");
     if (oldestTree >= 100) achievementsToCheck.push("Savior");

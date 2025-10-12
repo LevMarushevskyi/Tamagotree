@@ -25,6 +25,7 @@ import { ArrowLeft, Award, TreePine, Trophy, Sprout, Star, Trash2, Settings as S
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import { checkLevelUp, calculateLevelProgress } from "@/utils/xpCalculations";
+import { calculateTreeAgeDays } from "@/utils/ageCalculations";
 import { checkTreeAchievements, checkAcornAchievements, checkLeaderboardAchievements } from "@/utils/achievementChecks";
 
 interface Profile {
@@ -1113,7 +1114,7 @@ const Profile = () => {
                           </Badge>
                         </span>
                         <span className="text-muted-foreground">
-                          {tree.age_days} days old
+                          {calculateTreeAgeDays(tree.created_at)} days old
                         </span>
                       </div>
                       <div className="mt-2 text-xs text-muted-foreground">
