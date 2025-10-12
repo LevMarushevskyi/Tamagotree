@@ -5,7 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Award, TreePine, Trophy, Sprout, Star } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { ArrowLeft, Award, TreePine, Trophy, Sprout, Star, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 
 interface Profile {
@@ -20,7 +32,9 @@ const Profile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [treeCount, setTreeCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -71,6 +85,52 @@ const Profile = () => {
       setTreeCount(count || 0);
     } catch (error) {
       console.error("Error fetching tree count:", error);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+
+    setIsDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to delete your account",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const response = await supabase.functions.invoke('delete-account', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      toast({
+        title: "Account Deleted",
+        description: "Your account has been successfully deleted. You can re-register with the same email if you wish.",
+      });
+
+      // Sign out and redirect to home
+      await supabase.auth.signOut();
+      navigate("/");
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete account. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -234,6 +294,45 @@ const Profile = () => {
                 Each tree you care for contributes to cooling Durham's urban heat islands and
                 fighting climate change. Keep up the amazing work! 🌱
               </p>
+            </CardContent>
+          </Card>
+
+          {/* Account Management */}
+          <Card className="border-destructive/50">
+            <CardHeader>
+              <CardTitle className="text-destructive">Danger Zone</CardTitle>
+              <CardDescription>Irreversible actions for your account</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" disabled={isDeleting}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {isDeleting ? "Deleting..." : "Delete Account"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete your account,
+                      including all your trees, tasks, and progress data.
+                      <br />
+                      <br />
+                      However, you can re-register with the same email address in the future if you change your mind.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete Account
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         </div>
