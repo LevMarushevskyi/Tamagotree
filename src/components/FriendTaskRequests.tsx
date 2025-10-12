@@ -143,6 +143,20 @@ export const FriendTaskRequests = ({ currentUser }: FriendTaskRequestsProps) => 
 
       if (treeXpError) throw treeXpError;
 
+      // Increment tree's daily_tasks_completed counter
+      const { data: treeData } = await supabase
+        .from("tree")
+        .select("daily_tasks_completed")
+        .eq("id", request.tree_id)
+        .single();
+
+      if (treeData) {
+        await supabase
+          .from("tree")
+          .update({ daily_tasks_completed: (treeData.daily_tasks_completed || 0) + 1 })
+          .eq("id", request.tree_id);
+      }
+
       toast({
         title: "Task Completed!",
         description: `You earned ${request.helper_reward_acorns} acorns and ${request.helper_reward_bp} BP! ${request.requester_profile.username} was notified.`,

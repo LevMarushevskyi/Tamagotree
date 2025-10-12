@@ -192,6 +192,7 @@ const TreeDetail = () => {
 
       // Check if quests need to be reset (18 hours have passed)
       const now = new Date();
+      let anyQuestsReset = false;
       const resetPromises = userProgress?.map(async (uq) => {
         const lastReset = new Date(uq.last_reset_at);
         const hoursSinceReset = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60);
@@ -208,12 +209,21 @@ const TreeDetail = () => {
             .eq("id", uq.id);
 
           if (error) console.error("Error resetting quest:", error);
+          anyQuestsReset = true;
           return { ...uq, completed: false, completed_at: null, last_reset_at: now.toISOString() };
         }
         return uq;
       }) || [];
 
       const resetProgress = await Promise.all(resetPromises);
+
+      // Reset daily_tasks_completed if any quests were reset
+      if (anyQuestsReset) {
+        await supabase
+          .from("tree")
+          .update({ daily_tasks_completed: 0 })
+          .eq("id", treeId);
+      }
 
       // Create user_quests entries for any quests the user hasn't started yet
       const existingQuestIds = resetProgress.map((uq) => uq.quest_id);
@@ -440,6 +450,13 @@ const TreeDetail = () => {
       const newHealth = Math.min(100, tree.health_percentage + 10); // Boost health by 10%
       const treeLevelUpInfo = checkLevelUp(tree.xp_earned, newTreeXp);
 
+      // Get current daily_tasks_completed to increment
+      const { data: treeData } = await supabase
+        .from("tree")
+        .select("daily_tasks_completed")
+        .eq("id", treeId)
+        .single();
+
       const { error: treeError } = await supabase
         .from("tree")
         .update({
@@ -447,6 +464,7 @@ const TreeDetail = () => {
           level: treeLevelUpInfo.newLevel,
           health_percentage: newHealth,
           health_status: newHealth >= 70 ? "healthy" : newHealth >= 40 ? "needs_care" : "critical",
+          daily_tasks_completed: (treeData?.daily_tasks_completed || 0) + 1,
         })
         .eq("id", treeId);
 
