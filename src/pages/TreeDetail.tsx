@@ -58,6 +58,28 @@ interface Profile {
   username: string;
 }
 
+interface Quest {
+  id: string;
+  name: string;
+  description: string;
+  quest_type: string;
+  category: string | null;
+  acorn_reward: number | null;
+  bp_reward: number | null;
+  xp_reward: number | null;
+  tree_specific: boolean | null;
+  icon: string | null;
+}
+
+interface UserQuest {
+  id: string;
+  quest_id: string;
+  completed: boolean | null;
+  completed_at: string | null;
+  last_reset_at: string;
+  quests: Quest;
+}
+
 const TreeDetail = () => {
   const { treeId } = useParams();
   const navigate = useNavigate();
@@ -71,6 +93,8 @@ const TreeDetail = () => {
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [dailyQuests, setDailyQuests] = useState<UserQuest[]>([]);
+  const [loadingQuests, setLoadingQuests] = useState(false);
 
   useEffect(() => {
     // Get current user
@@ -113,6 +137,11 @@ const TreeDetail = () => {
 
       if (error) throw error;
       setTree(data);
+
+      // Fetch quests after tree is loaded
+      if (currentUser && data.user_id === currentUser.id) {
+        fetchDailyQuests();
+      }
     } catch (error: any) {
       console.error("Error fetching tree:", error);
       toast({
@@ -122,6 +151,84 @@ const TreeDetail = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDailyQuests = async () => {
+    if (!treeId || !currentUser) return;
+
+    setLoadingQuests(true);
+    try {
+      // First, get all daily quests
+      const { data: allQuests, error: questsError } = await supabase
+        .from("quests")
+        .select("*")
+        .eq("quest_type", "daily")
+        .eq("tree_specific", true);
+
+      if (questsError) throw questsError;
+
+      // Then get user's progress on these quests for this tree
+      const { data: userProgress, error: progressError } = await supabase
+        .from("user_quests")
+        .select("*, quests(*)")
+        .eq("user_id", currentUser.id)
+        .eq("tree_id", treeId);
+
+      if (progressError) throw progressError;
+
+      // Check if quests need to be reset (18 hours have passed)
+      const now = new Date();
+      const resetPromises = userProgress?.map(async (uq) => {
+        const lastReset = new Date(uq.last_reset_at);
+        const hoursSinceReset = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60);
+
+        if (hoursSinceReset >= 18 && uq.completed) {
+          // Reset the quest
+          const { error } = await supabase
+            .from("user_quests")
+            .update({
+              completed: false,
+              completed_at: null,
+              last_reset_at: now.toISOString(),
+            })
+            .eq("id", uq.id);
+
+          if (error) console.error("Error resetting quest:", error);
+          return { ...uq, completed: false, completed_at: null, last_reset_at: now.toISOString() };
+        }
+        return uq;
+      }) || [];
+
+      const resetProgress = await Promise.all(resetPromises);
+
+      // Create user_quests entries for any quests the user hasn't started yet
+      const existingQuestIds = resetProgress.map((uq) => uq.quest_id);
+      const newQuests = allQuests?.filter((q) => !existingQuestIds.includes(q.id)) || [];
+
+      if (newQuests.length > 0) {
+        const { data: inserted, error: insertError } = await supabase
+          .from("user_quests")
+          .insert(
+            newQuests.map((q) => ({
+              user_id: currentUser.id,
+              quest_id: q.id,
+              tree_id: treeId,
+              completed: false,
+            }))
+          )
+          .select("*, quests(*)");
+
+        if (insertError) throw insertError;
+
+        setDailyQuests([...resetProgress, ...(inserted || [])] as UserQuest[]);
+      } else {
+        setDailyQuests(resetProgress as UserQuest[]);
+      }
+    } catch (error) {
+      console.error("Error fetching quests:", error);
+    } finally {
+      setLoadingQuests(false);
     }
   };
 
@@ -178,6 +285,85 @@ const TreeDetail = () => {
 
   const handleEdit = () => {
     navigate(`/tree/${treeId}/edit`);
+  };
+
+  const handleCompleteQuest = async (userQuestId: string, quest: Quest) => {
+    if (!currentUser || !treeId || !tree) return;
+
+    try {
+      const now = new Date().toISOString();
+
+      // Mark quest as completed
+      const { error: questError } = await supabase
+        .from("user_quests")
+        .update({
+          completed: true,
+          completed_at: now,
+        })
+        .eq("id", userQuestId);
+
+      if (questError) throw questError;
+
+      // Award rewards
+      const acornReward = quest.acorn_reward || 0;
+      const bpReward = quest.bp_reward || 0;
+      const xpReward = quest.xp_reward || 0;
+
+      // Update user profile (acorns and XP)
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("acorns, total_xp")
+        .eq("id", currentUser.id)
+        .single();
+
+      if (profileData) {
+        await supabase
+          .from("profiles")
+          .update({
+            acorns: profileData.acorns + acornReward,
+            total_xp: profileData.total_xp + xpReward,
+          })
+          .eq("id", currentUser.id);
+      }
+
+      // Update tree (BP and health)
+      const newTreeXp = tree.xp_earned + bpReward;
+      const newHealth = Math.min(100, tree.health_percentage + 10); // Boost health by 10%
+
+      const { error: treeError } = await supabase
+        .from("tree")
+        .update({
+          xp_earned: newTreeXp,
+          health_percentage: newHealth,
+          health_status: newHealth >= 70 ? "healthy" : newHealth >= 40 ? "needs_care" : "critical",
+        })
+        .eq("id", treeId);
+
+      if (treeError) throw treeError;
+
+      // Update local state
+      setTree({
+        ...tree,
+        xp_earned: newTreeXp,
+        health_percentage: newHealth,
+        health_status: newHealth >= 70 ? "healthy" : newHealth >= 40 ? "needs_care" : "critical",
+      });
+
+      // Refresh quests
+      await fetchDailyQuests();
+
+      toast({
+        title: "Quest Completed!",
+        description: `You earned ${acornReward} acorns, ${bpReward} BP, and ${xpReward} XP!`,
+      });
+    } catch (error) {
+      console.error("Error completing quest:", error);
+      toast({
+        title: "Error",
+        description: "Failed to complete quest. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleReportIssue = async () => {
@@ -602,16 +788,72 @@ const TreeDetail = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Target className="w-5 h-5 text-purple-500" />
-                  Quests
+                  Daily Care Quests
                 </CardTitle>
-                <CardDescription>Complete quests to earn Bloom Points and level up your tree</CardDescription>
+                <CardDescription>Complete quests to earn rewards and boost your tree's health</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center py-8 text-muted-foreground">
-                  <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No active quests at the moment.</p>
-                  <p className="text-sm mt-2">Check back soon for new challenges!</p>
-                </div>
+              <CardContent className="space-y-3">
+                {loadingQuests ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Sprout className="w-12 h-12 mx-auto mb-4 animate-pulse" />
+                    <p>Loading quests...</p>
+                  </div>
+                ) : dailyQuests.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No active quests at the moment.</p>
+                    <p className="text-sm mt-2">Check back soon for new challenges!</p>
+                  </div>
+                ) : (
+                  dailyQuests.map((userQuest) => {
+                    const quest = userQuest.quests;
+                    const isCompleted = userQuest.completed;
+
+                    return (
+                      <Card key={userQuest.id} className={isCompleted ? "opacity-60 bg-muted/50" : "border-primary/20"}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-2xl">{quest.icon}</span>
+                                <h3 className="font-semibold">{quest.name}</h3>
+                                {isCompleted && (
+                                  <Badge variant="secondary" className="ml-auto">Completed</Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-3">{quest.description}</p>
+                              <div className="flex flex-wrap gap-2 text-xs">
+                                {quest.acorn_reward && quest.acorn_reward > 0 && (
+                                  <Badge variant="outline" className="gap-1">
+                                    🪙 {quest.acorn_reward} Acorns
+                                  </Badge>
+                                )}
+                                {quest.bp_reward && quest.bp_reward > 0 && (
+                                  <Badge variant="outline" className="gap-1">
+                                    🌱 {quest.bp_reward} BP
+                                  </Badge>
+                                )}
+                                {quest.xp_reward && quest.xp_reward > 0 && (
+                                  <Badge variant="outline" className="gap-1">
+                                    ⭐ {quest.xp_reward} XP
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              disabled={isCompleted}
+                              onClick={() => handleCompleteQuest(userQuest.id, quest)}
+                              className="shrink-0"
+                            >
+                              {isCompleted ? "Done" : "Complete"}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
               </CardContent>
             </Card>
           )}
