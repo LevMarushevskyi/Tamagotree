@@ -24,7 +24,9 @@ export const containsProfanity = (text: string): boolean => {
 
   // Check for exact matches and substrings
   return PROFANITY_LIST.some(word => {
-    const pattern = new RegExp(`\\b${word}\\b|${word}`, 'i');
+    // Escape special regex characters in the word
+    const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(`\\b${escapedWord}\\b|${escapedWord}`, 'i');
     return pattern.test(normalizedText);
   });
 };
