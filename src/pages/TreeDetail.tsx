@@ -352,6 +352,35 @@ const TreeDetail = () => {
     return "bg-red-500";
   };
 
+  const handleAdoptTree = async () => {
+    if (!treeId || !currentUser) return;
+
+    try {
+      const { error } = await supabase
+        .from("tree")
+        .update({ user_id: currentUser.id })
+        .eq("id", treeId)
+        .is("user_id", null); // Only adopt if not already adopted
+
+      if (error) throw error;
+
+      toast({
+        title: "Tree Adopted! 🌳",
+        description: "You are now the caretaker of this tree. Start nurturing it to earn rewards!",
+      });
+
+      // Refresh tree details to update UI
+      await fetchTreeDetails();
+    } catch (error) {
+      console.error("Error adopting tree:", error);
+      toast({
+        title: "Adoption Failed",
+        description: "Could not adopt this tree. It may have already been adopted by someone else.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleDelete = async () => {
     if (!treeId) return;
 
@@ -875,6 +904,30 @@ const TreeDetail = () => {
               </Badge>
             </div>
           </div>
+
+          {/* Adopt Button for Unadopted Trees */}
+          {!tree.user_id && currentUser && (
+            <Card className="bg-gradient-to-br from-primary/10 to-secondary/10 border-2 border-primary">
+              <CardContent className="pt-6 pb-6">
+                <div className="text-center space-y-4">
+                  <div>
+                    <h3 className="text-2xl font-bold mb-2">🌱 Adopt This Tree</h3>
+                    <p className="text-muted-foreground">
+                      Take care of this tree, earn rewards, and help it grow!
+                    </p>
+                  </div>
+                  <Button
+                    size="lg"
+                    className="text-lg px-8 py-6"
+                    onClick={handleAdoptTree}
+                  >
+                    <Heart className="w-6 h-6 mr-2" />
+                    Adopt This Tree
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Photo Section with Decorations */}
           {tree.photo_url && (
