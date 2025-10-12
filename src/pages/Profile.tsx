@@ -20,7 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Award, TreePine, Trophy, Sprout, Star, Trash2, Settings as SettingsIcon, Eye, Moon, Sun, Volume2, VolumeX, Edit as EditIcon, Camera, Save, X } from "lucide-react";
+import { ArrowLeft, Award, TreePine, Trophy, Sprout, Star, Trash2, Settings as SettingsIcon, Eye, Moon, Sun, Volume2, VolumeX, Edit as EditIcon, Camera, Save, X, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 
@@ -362,6 +362,24 @@ const Profile = () => {
       });
     } finally {
       setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Signed Out",
+        description: "You have been successfully signed out.",
+      });
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -871,7 +889,19 @@ const Profile = () => {
                     <Trash2 className="w-4 h-4" />
                     Danger Zone
                   </h3>
-                  <div className="pl-6">
+                  <div className="pl-6 space-y-4">
+                    {/* Sign Out */}
+                    <div className="p-4 border border-muted rounded-lg bg-muted/20">
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Sign out of your account. You can sign back in anytime.
+                      </p>
+                      <Button variant="outline" size="sm" onClick={handleSignOut}>
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </Button>
+                    </div>
+
+                    {/* Delete Account */}
                     <div className="p-4 border border-destructive/50 rounded-lg bg-destructive/5">
                       <p className="text-sm text-muted-foreground mb-3">
                         Permanently delete your account and all associated data. This action cannot be undone.
