@@ -12,11 +12,11 @@
 
 ## 💡 Inspiration
 
-Urban heat islands are killing newly planted trees in cities across America. In Durham, NC, we saw a critical gap: communities plant trees with good intentions, but without ongoing care, many die within their first year. We were inspired to create a solution that combines technology, gamification, and community action to solve this problem. By making tree care fun and rewarding, we can mobilize citizens to become active guardians of their urban forest, fighting climate change one tree at a time.
+Urban heat islands are killing newly planted trees in cities across America. While living in Durham, NC, we saw communities plant trees with good intentions, but without ongoing care, many died within their first year. We were inspired to create a solution that combines technology, gamification, and community action to solve this problem. By making tree care fun and rewarding, we can mobilize citizens to become active guardians of their urban forest, fighting climate change one tree at a time.
 
 ## 🌳 What it does
 
-Tomagotree is a gamified tree care platform that turns urban tree maintenance into an engaging community experience. Users can:
+Tamagotree is a gamified tree care platform that turns urban tree maintenance into an engaging community experience. Users can:
 - **Discover and adopt** real trees in their neighborhood through an interactive map
 - **Complete daily quests** (watering, singing, leaf cleanup) with photo verification
 - **Earn rewards** (Acorns, XP, Branch Points) for consistent tree care
@@ -118,10 +118,8 @@ We built Tomagotree using a modern full-stack approach with **Claude Code** as o
 
 **Short-term (Next Sprint):**
 - 🌡️ **Weather Integration** - Display real-time VPD and temperature data on tree pages
-- 📱 **Push Notifications** - Remind users when their trees need watering
-- 🏅 **Weekly Challenges** - Special limited-time events with bonus rewards
-- 📊 **Analytics Dashboard** - Show users their total environmental impact over time
-- 🎨 **Custom Avatars** - Let users personalize their profile pictures
+- 📱 **Port to IOS & Android & Push Notifications** - Remind users when their trees need watering and allow them to easily get up and go water them by simply opening an app. 
+- 📚 **Tree & Tree Species Recognition** - We are on the verge of being able to implament open source API calls to models that recognize weather the image a user uploads is a tree or not, and further to recognize what speciaies of tree it is and infer useful insights about it based on that: https://universe.roboflow.com/tree-species-identification/tree-species-identification-rjtsb/model/1 
 
 **Medium-term (Next Quarter):**
 - 🗺️ **Expand to More Cities** - Scale beyond Durham to other NC cities
@@ -139,7 +137,6 @@ We built Tomagotree using a modern full-stack approach with **Claude Code** as o
 - 💰 **Sponsor System** - Let businesses sponsor trees and support urban forestry
 - 🎓 **Educational Partnerships** - Work with schools to teach environmental stewardship
 - 📈 **Impact Metrics** - Calculate and display carbon offset, air quality improvements
-- 🏆 **Certification Program** - Recognize top caregivers with official Durham recognition
 
 **Technical Improvements:**
 - Implement progressive web app (PWA) features for offline support
@@ -432,9 +429,6 @@ See the **[Vercel Deployment Guide](VERCEL_DEPLOYMENT.md)** for complete instruc
 5. **Deploy!**
    - Vercel will automatically deploy on push to main
 
-### Alternative: Deploy with Lovable
-
-Simply open [Lovable](https://lovable.dev/projects/49d24c51-7337-45c0-b38d-efef579a9686) and click **Share → Publish**.
 
 ---
 
