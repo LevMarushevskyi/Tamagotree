@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ArrowLeft, Camera, MapPin, Sprout } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
+import { validateTreeName, MAX_TREE_NAME_LENGTH } from "@/utils/nameValidation";
 
 const Map = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -15,6 +17,7 @@ const Map = () => {
   const [species, setSpecies] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
+  const [wantToAdopt, setWantToAdopt] = useState(true);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -53,12 +56,23 @@ const Map = () => {
     e.preventDefault();
     if (!user) return;
 
+    // Validate tree name
+    const treeNameValidation = validateTreeName(treeName);
+    if (!treeNameValidation.valid) {
+      toast({
+        title: "Invalid Tree Name",
+        description: treeNameValidation.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { error } = await supabase.from("trees").insert({
-        user_id: user.id,
-        name: treeName,
+        user_id: wantToAdopt ? user.id : null,
+        name: treeName.trim(),
         species: species || null,
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude),
@@ -70,8 +84,10 @@ const Map = () => {
       if (error) throw error;
 
       toast({
-        title: "Tree reported! 🌱",
-        description: "Your sapling has been added to the map.",
+        title: wantToAdopt ? "Tree reported and adopted! 🌱" : "Tree reported! 🌱",
+        description: wantToAdopt
+          ? "Your sapling has been added to the map and you've adopted it!"
+          : "Your sapling has been added to the map and is available for adoption.",
       });
 
       navigate("/dashboard");
@@ -123,8 +139,12 @@ const Map = () => {
                     placeholder="e.g., Little Oak, Mighty Maple"
                     value={treeName}
                     onChange={(e) => setTreeName(e.target.value)}
+                    maxLength={MAX_TREE_NAME_LENGTH}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Max {MAX_TREE_NAME_LENGTH} characters
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -174,15 +194,38 @@ const Map = () => {
                   Use Current Location
                 </Button>
 
-                <div className="p-4 bg-muted rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <Camera className="w-5 h-5 text-muted-foreground mt-0.5" />
-                    <div className="text-sm text-muted-foreground">
-                      <p className="font-medium mb-1">Photo Upload (Coming Soon)</p>
-                      <p>
-                        Snap a photo of your tree to track its growth over time. This feature
-                        will be available in the next update!
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                    <Checkbox
+                      id="adopt-tree"
+                      checked={wantToAdopt}
+                      onCheckedChange={(checked) => setWantToAdopt(checked as boolean)}
+                      className="mt-0.5"
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <Label
+                        htmlFor="adopt-tree"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        I want to adopt this tree
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        By adopting this tree, you'll be responsible for its care and earn XP for completing tasks.
+                        If unchecked, the tree will be available for others to adopt on the map.
                       </p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-muted rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Camera className="w-5 h-5 text-muted-foreground mt-0.5" />
+                      <div className="text-sm text-muted-foreground">
+                        <p className="font-medium mb-1">Photo Upload (Coming Soon)</p>
+                        <p>
+                          Snap a photo of your tree to track its growth over time. This feature
+                          will be available in the next update!
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

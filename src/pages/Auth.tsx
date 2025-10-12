@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Sprout, Leaf } from "lucide-react";
+import { validateUsername, MAX_USERNAME_LENGTH } from "@/utils/nameValidation";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -39,6 +40,18 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate username
+    const usernameToUse = username || email.split("@")[0];
+    const usernameValidation = validateUsername(usernameToUse);
+    if (!usernameValidation.valid) {
+      toast({
+        title: "Invalid Username",
+        description: usernameValidation.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Validate password length
     if (password.length < 8) {
       toast({
@@ -68,7 +81,7 @@ const Auth = () => {
         options: {
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
-            username: username || email.split("@")[0],
+            username: usernameToUse,
           },
         },
       });
@@ -371,7 +384,11 @@ const Auth = () => {
                       placeholder="tree_guardian"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
+                      maxLength={MAX_USERNAME_LENGTH}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Max {MAX_USERNAME_LENGTH} characters, letters, numbers, underscores and hyphens only
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>

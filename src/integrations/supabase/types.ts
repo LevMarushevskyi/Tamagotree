@@ -68,6 +68,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
           guardian_rank: string
           id: string
@@ -79,6 +80,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           guardian_rank?: string
           id: string
@@ -90,6 +92,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           guardian_rank?: string
           id?: string
@@ -214,7 +217,7 @@ export type Database = {
           photo_url: string | null
           species: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
           xp_earned: number
         }
         Insert: {
@@ -228,7 +231,7 @@ export type Database = {
           photo_url?: string | null
           species?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           xp_earned?: number
         }
         Update: {
@@ -242,7 +245,7 @@ export type Database = {
           photo_url?: string | null
           species?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           xp_earned?: number
         }
         Relationships: []
