@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { FriendTaskRequests } from "@/components/FriendTaskRequests";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
@@ -1053,6 +1054,9 @@ const Profile = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Friend Task Requests */}
+          {user && <FriendTaskRequests currentUser={user} />}
 
           {/* Adopted Trees - Private to User */}
           <Card>

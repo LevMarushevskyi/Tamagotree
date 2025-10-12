@@ -38,6 +38,7 @@ import { ArrowLeft, TreePine, MapPin, Heart, Star, Sprout, Clock, Edit, Trash2, 
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import { checkLevelUp, calculateLevelProgress } from "@/utils/xpCalculations";
+import { FriendTaskRequest } from "@/components/FriendTaskRequest";
 
 interface Tree {
   name: string;
@@ -910,11 +911,28 @@ const TreeDetail = () => {
           {isOwner && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="w-5 h-5 text-purple-500" />
-                  Daily Care Quests
-                </CardTitle>
-                <CardDescription>Complete quests to earn rewards and boost your tree's health</CardDescription>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="w-5 h-5 text-purple-500" />
+                      Daily Care Quests
+                    </CardTitle>
+                    <CardDescription>Complete quests to earn rewards and boost your tree's health</CardDescription>
+                  </div>
+                  {currentUser && tree && (
+                    <FriendTaskRequest
+                      treeId={treeId!}
+                      treeName={tree.name}
+                      currentUser={currentUser}
+                      onRequestSent={() => {
+                        toast({
+                          title: "Request Sent",
+                          description: "Your friend will be notified!",
+                        });
+                      }}
+                    />
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 {loadingQuests ? (
