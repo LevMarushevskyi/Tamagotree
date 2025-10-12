@@ -194,18 +194,12 @@ const MapView = ({ onLocationUpdate }: MapViewProps) => {
         {userLocation && <MapController center={userLocation} />}
       </MapContainer>
 
-      {/* Location Status Overlay */}
-      {isLoadingLocation && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg">
-          <p className="text-sm">Getting your location...</p>
-        </div>
-      )}
-
+      {/* Location Status - positioned below top bar near profile icon */}
       {locationError && !userLocation && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-destructive/90 text-destructive-foreground px-4 py-2 rounded-lg shadow-lg max-w-sm">
-          <p className="text-sm font-semibold">Location Error</p>
-          <p className="text-xs">{locationError}</p>
-          <p className="text-xs mt-1">Showing Durham, NC area</p>
+        <div className="absolute top-20 right-4 z-[999] bg-background border border-border px-3 py-2 rounded-lg shadow-md max-w-xs">
+          <p className="text-xs text-muted-foreground">
+            📍 Using default location (Durham, NC)
+          </p>
         </div>
       )}
     </div>
