@@ -133,6 +133,13 @@ const TreeDetail = () => {
     }
   }, [treeId]);
 
+  // Fetch quests when both tree and currentUser are available
+  useEffect(() => {
+    if (tree && currentUser && tree.user_id === currentUser.id) {
+      fetchDailyQuests();
+    }
+  }, [tree, currentUser]);
+
   const fetchTreeDetails = async () => {
     try {
       const { data, error } = await supabase
@@ -143,11 +150,6 @@ const TreeDetail = () => {
 
       if (error) throw error;
       setTree(data);
-
-      // Fetch quests after tree is loaded
-      if (currentUser && data.user_id === currentUser.id) {
-        fetchDailyQuests();
-      }
     } catch (error: any) {
       console.error("Error fetching tree:", error);
       toast({

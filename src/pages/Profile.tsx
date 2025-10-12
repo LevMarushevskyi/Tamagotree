@@ -102,6 +102,7 @@ const Profile = () => {
     treeBp: null,
   });
   const [weeklyQuests, setWeeklyQuests] = useState<UserQuest[]>([]);
+  const [questProgress, setQuestProgress] = useState<Map<string, { current: number; target: number }>>(new Map());
   const [loadingQuests, setLoadingQuests] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -376,17 +377,76 @@ const Profile = () => {
     return sunday.toISOString();
   };
 
+  const calculateQuestProgress = async (questName: string): Promise<{ current: number; target: number }> => {
+    if (!user) return { current: 0, target: 1 };
+
+    try {
+      switch (questName) {
+        case "Busy Bee": {
+          // Count days this week where user completed at least one daily quest
+          const weekStart = getWeekStart();
+          const { data: completedQuests } = await supabase
+            .from("user_quests")
+            .select("completed_at, quests!inner(quest_type)")
+            .eq("user_id", user.id)
+            .eq("completed", true)
+            .gte("completed_at", weekStart)
+            .eq("quests.quest_type", "daily");
+
+          // Count unique days
+          const uniqueDays = new Set(
+            completedQuests?.map((q) => new Date(q.completed_at!).toDateString()) || []
+          );
+          return { current: uniqueDays.size, target: 7 };
+        }
+
+        case "New Life": {
+          // Count trees planted this week
+          const weekStart = getWeekStart();
+          const { count } = await supabase
+            .from("tree")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .gte("created_at", weekStart);
+          return { current: count || 0, target: 1 };
+        }
+
+        case "Social Butterfly": {
+          // Friends system not implemented yet
+          return { current: 0, target: 1 };
+        }
+
+        case "TOP 10!":
+        case "TOP 5!":
+        case "ON TOP!": {
+          // Check leaderboard position for consecutive days
+          // For now, return 0 (this needs more complex tracking)
+          const target = 3;
+          // TODO: Implement consecutive day tracking
+          return { current: 0, target };
+        }
+
+        default:
+          return { current: 0, target: 1 };
+      }
+    } catch (error) {
+      console.error("Error calculating quest progress:", error);
+      return { current: 0, target: 1 };
+    }
+  };
+
   const fetchWeeklyQuests = async () => {
     if (!user) return;
 
     setLoadingQuests(true);
     try {
-      // Get all weekly quests
+      // Get all weekly quests (excluding Social Butterfly for now)
       const { data: allQuests, error: questsError } = await supabase
         .from("quests")
         .select("*")
         .eq("quest_type", "weekly")
-        .eq("tree_specific", false);
+        .eq("tree_specific", false)
+        .not("name", "eq", "Social Butterfly"); // Exclude until friends system is implemented
 
       if (questsError) throw questsError;
 
@@ -455,14 +515,97 @@ const Profile = () => {
 
         if (insertError) throw insertError;
 
-        setWeeklyQuests([...resetProgress, ...(inserted || [])] as UserQuest[]);
+        const allUserQuests = [...resetProgress, ...(inserted || [])] as UserQuest[];
+
+        // Calculate progress for each quest
+        const progressMap = new Map<string, { current: number; target: number }>();
+        const completionPromises = allUserQuests.map(async (uq) => {
+          const quest = uq.quests;
+          const progress = await calculateQuestProgress(quest.name);
+          progressMap.set(quest.name, progress);
+
+          // Auto-complete quest if progress reaches target and not already completed
+          if (progress.current >= progress.target && !uq.completed) {
+            await autoCompleteWeeklyQuest(uq.id, quest);
+            return { ...uq, completed: true };
+          }
+          return uq;
+        });
+
+        const updatedQuests = await Promise.all(completionPromises);
+        setWeeklyQuests(updatedQuests);
+        setQuestProgress(progressMap);
       } else {
-        setWeeklyQuests(resetProgress as UserQuest[]);
+        const allUserQuests = resetProgress as UserQuest[];
+
+        // Calculate progress for each quest
+        const progressMap = new Map<string, { current: number; target: number }>();
+        const completionPromises = allUserQuests.map(async (uq) => {
+          const quest = uq.quests;
+          const progress = await calculateQuestProgress(quest.name);
+          progressMap.set(quest.name, progress);
+
+          // Auto-complete quest if progress reaches target and not already completed
+          if (progress.current >= progress.target && !uq.completed) {
+            await autoCompleteWeeklyQuest(uq.id, quest);
+            return { ...uq, completed: true };
+          }
+          return uq;
+        });
+
+        const updatedQuests = await Promise.all(completionPromises);
+        setWeeklyQuests(updatedQuests);
+        setQuestProgress(progressMap);
       }
     } catch (error) {
       console.error("Error fetching weekly quests:", error);
     } finally {
       setLoadingQuests(false);
+    }
+  };
+
+  const autoCompleteWeeklyQuest = async (userQuestId: string, quest: Quest) => {
+    if (!user) return;
+
+    try {
+      const now = new Date().toISOString();
+
+      // Mark quest as completed
+      await supabase
+        .from("user_quests")
+        .update({
+          completed: true,
+          completed_at: now,
+        })
+        .eq("id", userQuestId);
+
+      // Award rewards
+      const acornReward = quest.acorn_reward || 0;
+      const xpReward = quest.xp_reward || 0;
+
+      // Update user profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("acorns, total_xp")
+        .eq("id", user.id)
+        .single();
+
+      if (profileData) {
+        await supabase
+          .from("profiles")
+          .update({
+            acorns: profileData.acorns + acornReward,
+            total_xp: profileData.total_xp + xpReward,
+          })
+          .eq("id", user.id);
+      }
+
+      toast({
+        title: "Weekly Quest Completed!",
+        description: `${quest.name} completed! You earned ${acornReward} acorns and ${xpReward} XP!`,
+      });
+    } catch (error) {
+      console.error("Error auto-completing weekly quest:", error);
     }
   };
 
@@ -567,61 +710,8 @@ const Profile = () => {
     }
   };
 
-  const handleCompleteWeeklyQuest = async (userQuestId: string, quest: Quest) => {
-    if (!user) return;
-
-    try {
-      const now = new Date().toISOString();
-
-      // Mark quest as completed
-      const { error: questError } = await supabase
-        .from("user_quests")
-        .update({
-          completed: true,
-          completed_at: now,
-        })
-        .eq("id", userQuestId);
-
-      if (questError) throw questError;
-
-      // Award rewards (weekly quests only give acorns and XP)
-      const acornReward = quest.acorn_reward || 0;
-      const xpReward = quest.xp_reward || 0;
-
-      // Update user profile
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("acorns, total_xp")
-        .eq("id", user.id)
-        .single();
-
-      if (profileData) {
-        await supabase
-          .from("profiles")
-          .update({
-            acorns: profileData.acorns + acornReward,
-            total_xp: profileData.total_xp + xpReward,
-          })
-          .eq("id", user.id);
-      }
-
-      // Refresh quests and profile
-      await fetchWeeklyQuests();
-      await fetchProfile();
-
-      toast({
-        title: "Weekly Quest Completed!",
-        description: `You earned ${acornReward} acorns and ${xpReward} XP!`,
-      });
-    } catch (error) {
-      console.error("Error completing weekly quest:", error);
-      toast({
-        title: "Error",
-        description: "Failed to complete quest. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+  // Weekly quests are now auto-completed when progress reaches target
+  // No manual completion needed
 
   const handleSignOut = async () => {
     try {
@@ -1068,7 +1158,7 @@ const Profile = () => {
                               )}
                             </div>
                             <p className="text-sm text-muted-foreground mb-3">{quest.description}</p>
-                            <div className="flex flex-wrap gap-2 text-xs">
+                            <div className="flex flex-wrap gap-2 text-xs mb-3">
                               {quest.acorn_reward && quest.acorn_reward > 0 && (
                                 <Badge variant="outline" className="gap-1">
                                   🪙 {quest.acorn_reward} Acorns
@@ -1080,20 +1170,27 @@ const Profile = () => {
                                 </Badge>
                               )}
                             </div>
-                            {userQuest.progress !== null && userQuest.progress > 0 && (
-                              <div className="mt-2 text-xs text-muted-foreground">
-                                Progress: {userQuest.progress} days
-                              </div>
-                            )}
+
+                            {/* Progress Bar */}
+                            {!isCompleted && (() => {
+                              const progress = questProgress.get(quest.name);
+                              if (!progress) return null;
+
+                              const percentage = (progress.current / progress.target) * 100;
+
+                              return (
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-muted-foreground">Progress</span>
+                                    <span className="font-medium">
+                                      {progress.current} / {progress.target}
+                                    </span>
+                                  </div>
+                                  <Progress value={percentage} className="h-2" />
+                                </div>
+                              );
+                            })()}
                           </div>
-                          <Button
-                            size="sm"
-                            disabled={isCompleted}
-                            onClick={() => handleCompleteWeeklyQuest(userQuest.id, quest)}
-                            className="shrink-0"
-                          >
-                            {isCompleted ? "Done" : "Complete"}
-                          </Button>
                         </div>
                       </CardContent>
                     </Card>
