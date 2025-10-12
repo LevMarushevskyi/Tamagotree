@@ -78,6 +78,8 @@ const Map = () => {
         longitude: parseFloat(longitude),
         age_days: 0,
         health_status: "healthy",
+        health_percentage: 100,
+        level: 1,
         xp_earned: 0,
       });
 

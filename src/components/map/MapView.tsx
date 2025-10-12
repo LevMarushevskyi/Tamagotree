@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
 import { Icon, LatLngExpression } from "leaflet";
 import { supabase } from "@/integrations/supabase/client";
+import TreeMenu from "@/components/tree/TreeMenu";
 import "leaflet/dist/leaflet.css";
 
 // Fix for default marker icons in react-leaflet
@@ -40,6 +41,8 @@ interface Tree {
   latitude: number;
   longitude: number;
   health_status: string;
+  health_percentage: number;
+  level: number;
   photo_url: string | null;
   xp_earned: number;
   age_days: number;
@@ -77,7 +80,7 @@ const MapView = ({ onLocationUpdate }: MapViewProps) => {
       try {
         const { data, error } = await supabase
           .from("trees")
-          .select("id, name, species, latitude, longitude, health_status, photo_url, xp_earned, age_days, created_at")
+          .select("id, name, species, latitude, longitude, health_status, health_percentage, level, photo_url, xp_earned, age_days, created_at")
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -149,26 +152,12 @@ const MapView = ({ onLocationUpdate }: MapViewProps) => {
             icon={treeIcon}
           >
             <Popup>
-              <div className="min-w-[200px]">
-                <h3 className="font-bold text-lg mb-2">{tree.name}</h3>
-                {tree.species && (
-                  <p className="text-sm text-muted-foreground mb-1">
-                    <span className="font-semibold">Species:</span> {tree.species}
-                  </p>
-                )}
-                <p className="text-sm text-muted-foreground mb-1">
-                  <span className="font-semibold">Health:</span>{" "}
-                  <span className={tree.health_status === "healthy" ? "text-green-600" : "text-yellow-600"}>
-                    {tree.health_status}
-                  </span>
-                </p>
-                <p className="text-sm text-muted-foreground mb-1">
-                  <span className="font-semibold">Age:</span> {tree.age_days} days
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-semibold">XP:</span> {tree.xp_earned}
-                </p>
-              </div>
+              <TreeMenu
+                treeId={tree.id}
+                name={tree.name}
+                healthPercentage={tree.health_percentage}
+                level={tree.level}
+              />
             </Popup>
           </Marker>
         ))}

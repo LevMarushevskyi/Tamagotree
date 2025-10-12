@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Map from "./pages/Map";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
+import TreeDetail from "./pages/TreeDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/map" element={<Map />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/tree/:treeId" element={<TreeDetail />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
