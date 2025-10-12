@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +37,7 @@ import {
 import { ArrowLeft, TreePine, MapPin, Heart, Star, Sprout, Clock, Edit, Trash2, User as UserIcon, Target, Flag, Camera, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
-import { checkLevelUp } from "@/utils/xpCalculations";
+import { checkLevelUp, calculateLevelProgress } from "@/utils/xpCalculations";
 
 interface Tree {
   name: string;
@@ -793,6 +794,23 @@ const TreeDetail = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold text-primary">{tree.level}</p>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-muted-foreground">
+                      {(() => {
+                        const levelProgress = calculateLevelProgress(tree.xp_earned);
+                        return `${levelProgress.current} / ${levelProgress.required} BP`;
+                      })()}
+                    </span>
+                  </div>
+                  <Progress
+                    value={(() => {
+                      const levelProgress = calculateLevelProgress(tree.xp_earned);
+                      return (levelProgress.current / levelProgress.required) * 100;
+                    })()}
+                    className="h-2"
+                  />
+                </div>
               </CardContent>
             </Card>
 
