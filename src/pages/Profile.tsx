@@ -446,8 +446,14 @@ const Profile = () => {
         }
 
         case "Social Butterfly": {
-          // Friends system not implemented yet
-          return { current: 0, target: 1 };
+          // Count accepted friendships created this week
+          const { count } = await supabase
+            .from("friendships")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("status", "accepted")
+            .gte("created_at", weekStart);
+          return { current: count || 0, target: 1 };
         }
 
         case "TOP 10!":
@@ -474,13 +480,12 @@ const Profile = () => {
 
     setLoadingQuests(true);
     try {
-      // Get all weekly quests (excluding Social Butterfly for now)
+      // Get all weekly quests
       const { data: allQuests, error: questsError } = await supabase
         .from("quests")
         .select("*")
         .eq("quest_type", "weekly")
-        .eq("tree_specific", false)
-        .not("name", "eq", "Social Butterfly"); // Exclude until friends system is implemented
+        .eq("tree_specific", false);
 
       if (questsError) throw questsError;
 

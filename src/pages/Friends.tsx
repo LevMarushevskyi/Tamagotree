@@ -185,6 +185,109 @@ const Friends = () => {
     }
   };
 
+  const checkSocialButterflyQuest = async () => {
+    if (!user) return;
+
+    try {
+      // Get the Social Butterfly quest
+      const { data: quest, error: questError } = await supabase
+        .from("quests")
+        .select("*")
+        .eq("name", "Social Butterfly")
+        .eq("quest_type", "weekly")
+        .maybeSingle();
+
+      if (questError || !quest) return;
+
+      // Check if user already has this quest
+      const { data: userQuest, error: userQuestError } = await supabase
+        .from("user_quests")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("quest_id", quest.id)
+        .is("tree_id", null)
+        .maybeSingle();
+
+      if (userQuestError) throw userQuestError;
+
+      if (!userQuest) {
+        // Create the user quest entry
+        const { data: newUserQuest, error: createError } = await supabase
+          .from("user_quests")
+          .insert({
+            user_id: user.id,
+            quest_id: quest.id,
+            tree_id: null,
+            completed: false,
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+      }
+
+      // Check if quest is already completed
+      if (userQuest?.completed) return;
+
+      // Get week start (Sunday at midnight EST)
+      const now = new Date();
+      const estOffset = -5;
+      const estNow = new Date(now.getTime() + estOffset * 60 * 60 * 1000);
+      const dayOfWeek = estNow.getUTCDay();
+      const weekStart = new Date(estNow);
+      weekStart.setUTCDate(estNow.getUTCDate() - dayOfWeek);
+      weekStart.setUTCHours(0, 0, 0, 0);
+
+      // Count accepted friendships this week
+      const { count } = await supabase
+        .from("friendships")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("status", "accepted")
+        .gte("created_at", weekStart.toISOString());
+
+      // If we have at least 1 friend added this week, complete the quest
+      if (count && count >= 1) {
+        const questId = userQuest?.id || (await supabase
+          .from("user_quests")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("quest_id", quest.id)
+          .is("tree_id", null)
+          .single()).data?.id;
+
+        if (!questId) return;
+
+        // Mark quest as completed
+        const { error: completeError } = await supabase
+          .from("user_quests")
+          .update({
+            completed: true,
+            completed_at: new Date().toISOString(),
+          })
+          .eq("id", questId);
+
+        if (completeError) throw completeError;
+
+        // Award rewards
+        const { error: rewardError } = await supabase.rpc("increment_user_rewards", {
+          user_id: user.id,
+          acorns_to_add: quest.acorn_reward || 0,
+          bp_to_add: quest.bp_reward || 0,
+        });
+
+        if (rewardError) throw rewardError;
+
+        toast({
+          title: "Quest Completed! 🦋",
+          description: `Social Butterfly completed! Earned ${quest.acorn_reward} acorns and ${quest.bp_reward} BP!`,
+        });
+      }
+    } catch (error) {
+      console.error("Error checking Social Butterfly quest:", error);
+    }
+  };
+
   const acceptFriendRequest = async (friendshipId: string, friendId: string) => {
     if (!user) return;
 
@@ -225,6 +328,9 @@ const Friends = () => {
 
         if (insertError) throw insertError;
       }
+
+      // Check and complete Social Butterfly quest
+      await checkSocialButterflyQuest();
 
       toast({
         title: "Friend Request Accepted",
