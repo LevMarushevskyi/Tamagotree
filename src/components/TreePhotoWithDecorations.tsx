@@ -43,7 +43,6 @@ export const TreePhotoWithDecorations = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Debounced save function to save positions while dragging
   const savePosition = useCallback(async (decorationId: string, x: number, y: number) => {
     try {
       const { error } = await supabase
@@ -84,20 +83,16 @@ export const TreePhotoWithDecorations = ({
     const x = e.clientX - rect.left - dragOffset.x;
     const y = e.clientY - rect.top - dragOffset.y;
 
-    // Convert to percentage
     const percentX = Math.max(0, Math.min(100, (x / rect.width) * 100));
     const percentY = Math.max(0, Math.min(100, (y / rect.height) * 100));
 
-    // Store pending position
     setPendingPosition({ x: percentX, y: percentY });
 
-    // Update immediately for smooth dragging
     const decoration = placedDecorations.find(d => d.id === draggingId);
     if (decoration && onDecorationMove) {
       onDecorationMove(draggingId, percentX, percentY);
     }
 
-    // Debounced save - save after 200ms of no movement
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
@@ -109,13 +104,11 @@ export const TreePhotoWithDecorations = ({
   const handleMouseUp = async () => {
     if (!draggingId || !pendingPosition) return;
 
-    // Clear any pending debounced saves
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
     }
 
-    // Perform final save immediately
     await savePosition(draggingId, pendingPosition.x, pendingPosition.y);
 
     toast({
@@ -156,7 +149,6 @@ export const TreePhotoWithDecorations = ({
     const percentX = Math.max(0, Math.min(100, (x / rect.width) * 100));
     const percentY = Math.max(0, Math.min(100, (y / rect.height) * 100));
 
-    // Store pending position
     setPendingPosition({ x: percentX, y: percentY });
 
     const decoration = placedDecorations.find(d => d.id === draggingId);
@@ -164,7 +156,6 @@ export const TreePhotoWithDecorations = ({
       onDecorationMove(draggingId, percentX, percentY);
     }
 
-    // Debounced save for touch as well
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
@@ -183,7 +174,6 @@ export const TreePhotoWithDecorations = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleMouseUp}
     >
-      {/* Tree Photo */}
       <img
         src={photoUrl}
         alt={treeName}
@@ -191,7 +181,6 @@ export const TreePhotoWithDecorations = ({
         draggable={false}
       />
 
-      {/* Decorations Overlay */}
       {placedDecorations.map((decoration) => (
         <div
           key={decoration.id}
@@ -205,7 +194,6 @@ export const TreePhotoWithDecorations = ({
           onMouseDown={(e) => handleMouseDown(e, decoration)}
           onTouchStart={(e) => handleTouchStart(e, decoration)}
         >
-          {/* Decoration Image */}
           <img
             src={decoration.decoration.image_url}
             alt={decoration.decoration.display_name}
@@ -214,7 +202,6 @@ export const TreePhotoWithDecorations = ({
             draggable={false}
           />
 
-          {/* Remove Button (only visible on hover for owners) */}
           {isOwner && (
             <Button
               size="icon"
@@ -231,7 +218,6 @@ export const TreePhotoWithDecorations = ({
             </Button>
           )}
 
-          {/* Drag Indicator */}
           {isOwner && draggingId === decoration.id && (
             <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-2 py-1 rounded text-xs whitespace-nowrap">
               <Move className="w-3 h-3 inline mr-1" />
@@ -241,7 +227,6 @@ export const TreePhotoWithDecorations = ({
         </div>
       ))}
 
-      {/* Instructions for owners */}
       {isOwner && placedDecorations.length > 0 && (
         <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded text-xs">
           Drag decorations to reposition • Hover & click X to remove

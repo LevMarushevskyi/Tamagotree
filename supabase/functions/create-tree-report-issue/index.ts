@@ -14,7 +14,6 @@ interface ReportData {
 }
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       headers: {
@@ -26,7 +25,6 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Verify the request is authenticated
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -35,7 +33,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Parse request body
     const reportData: ReportData = await req.json();
 
     if (!GITHUB_TOKEN) {
@@ -46,7 +43,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Format the reason for display
     const reasonLabels: Record<string, string> = {
       'fake': 'Fake Tree',
       'duplicate': 'Duplicate',
@@ -58,7 +54,6 @@ Deno.serve(async (req: Request) => {
 
     const reasonLabel = reasonLabels[reportData.reason] || reportData.reason;
 
-    // Create GitHub issue
     const issueTitle = `[Tree Report] ${reasonLabel}: ${reportData.tree_name}`;
     const issueBody = `## Tree Report
 
@@ -79,7 +74,6 @@ ${reportData.details || '_No additional details provided_'}
 ---
 *This issue was automatically created from a user report.*`;
 
-    // Create the GitHub issue
     const githubResponse = await fetch(
       `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/issues`,
       {

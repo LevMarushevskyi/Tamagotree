@@ -16,7 +16,6 @@ export const checkAndAwardAchievement = async (
   achievementName: string
 ): Promise<AchievementCheckResult | null> => {
   try {
-    // Get achievement details
     const { data: achievement, error: achError } = await supabase
       .from("achievements")
       .select("id, name, acorn_reward, bp_reward")
@@ -28,7 +27,6 @@ export const checkAndAwardAchievement = async (
       return null;
     }
 
-    // Check if user already has this achievement
     const { data: existing, error: existError } = await supabase
       .from("user_achievements")
       .select("id")
@@ -37,7 +35,6 @@ export const checkAndAwardAchievement = async (
       .single();
 
     if (existing) {
-      // Already unlocked
       return {
         achievementName: achievement.name,
         unlocked: false,
@@ -46,7 +43,6 @@ export const checkAndAwardAchievement = async (
       };
     }
 
-    // Award the achievement
     const { error: insertError } = await supabase
       .from("user_achievements")
       .insert({
@@ -56,7 +52,6 @@ export const checkAndAwardAchievement = async (
 
     if (insertError) throw insertError;
 
-    // Award rewards to user profile
     const { data: profile } = await supabase
       .from("profiles")
       .select("acorns, total_xp, level")
@@ -93,7 +88,6 @@ export const checkAndAwardAchievement = async (
  */
 export const checkTreeAchievements = async (userId: string) => {
   try {
-    // Get user's tree count
     const { data: trees, error: treeError } = await supabase
       .from("tree")
       .select("id, level, created_at")
@@ -104,7 +98,6 @@ export const checkTreeAchievements = async (userId: string) => {
     const treeCount = trees.length;
     const achievementsToCheck: string[] = [];
 
-    // Tree planting achievements
     if (treeCount >= 1) achievementsToCheck.push("Life Bringer");
     if (treeCount >= 5) {
       achievementsToCheck.push("Arborist");
@@ -112,12 +105,10 @@ export const checkTreeAchievements = async (userId: string) => {
     }
     if (treeCount >= 10) achievementsToCheck.push("Lean Green Climate Action Machine");
 
-    // Bloom level achievements
     const level5Trees = trees.filter((t) => t.level >= 5);
     if (level5Trees.length >= 1) achievementsToCheck.push("Little Gardener");
     if (level5Trees.length >= 5) achievementsToCheck.push("Forest Tender");
 
-    // Tree maintenance achievements (based on age)
     const oldestTree = trees.reduce((max, tree) => {
       const age = calculateTreeAgeDays(tree.created_at);
       return age > max ? age : max;
@@ -126,7 +117,6 @@ export const checkTreeAchievements = async (userId: string) => {
     if (oldestTree >= 50) achievementsToCheck.push("Grove Guardian");
     if (oldestTree >= 100) achievementsToCheck.push("Savior");
 
-    // Check all achievements
     for (const achName of achievementsToCheck) {
       await checkAndAwardAchievement(userId, achName);
     }

@@ -23,13 +23,11 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if passwords match and meet requirements
   const passwordsMatch = password === confirmPassword && confirmPassword !== "";
   const passwordTooShort = password.length > 0 && password.length < 8;
   const confirmPasswordTouched = confirmPassword.length > 0;
 
   useEffect(() => {
-    // Check if already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         navigate("/dashboard");
@@ -40,7 +38,6 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate username
     const usernameToUse = username || email.split("@")[0];
     const usernameValidation = validateUsername(usernameToUse);
     if (!usernameValidation.valid) {
@@ -52,7 +49,6 @@ const Auth = () => {
       return;
     }
 
-    // Validate password length
     if (password.length < 8) {
       toast({
         title: "Password too short",
@@ -62,7 +58,6 @@ const Auth = () => {
       return;
     }
 
-    // Validate passwords match
     if (password !== confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -171,7 +166,6 @@ const Auth = () => {
       const { email: userEmail, obfuscatedEmail: obfEmail, message } = response.data;
 
       if (userEmail) {
-        // Found the email
         setFoundEmail(userEmail);
         setObfuscatedEmail(obfEmail);
         setEmail(userEmail);
@@ -180,7 +174,6 @@ const Auth = () => {
           description: `We found an account with email: ${obfEmail}`,
         });
       } else {
-        // Username not found, but don't reveal this for security
         toast({
           title: "Request processed",
           description: message || "If this username exists, a password reset email will be sent.",

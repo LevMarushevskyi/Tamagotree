@@ -5,25 +5,22 @@ const path = require('path');
 const inputImage = '/Users/del/Downloads/New Piskel (27).png';
 const outputDir = path.join(__dirname, '../public/decorations');
 
-// Ensure output directory exists
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true });
 }
 
-// The image is 16x24, so we'll extract 8x8 sprites
-// That gives us 2 columns and 3 rows = 6 decorations
 const SPRITE_SIZE = 8;
-const SCALE_FACTOR = 4; // Upscale to 32x32 for better visibility
+const SCALE_FACTOR = 4;
 const COLS = 2;
 const ROWS = 3;
 
 const decorationNames = [
-  'bow',      // was whale
-  'sun',      // was scissors
-  'whale',    // was globe
-  'scissors', // was bow
-  'globe',    // was sun
-  null        // 6th sprite not used
+  'bow',
+  'sun',
+  'whale',
+  'scissors',
+  'globe',
+  null
 ];
 
 async function extractSprites() {
@@ -52,7 +49,7 @@ async function extractSprites() {
             height: SPRITE_SIZE
           })
           .resize(SPRITE_SIZE * SCALE_FACTOR, SPRITE_SIZE * SCALE_FACTOR, {
-            kernel: 'nearest', // Use nearest neighbor to preserve pixel art style
+            kernel: 'nearest',
           })
           .toFile(path.join(outputDir, `${name}.png`));
 

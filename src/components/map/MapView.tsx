@@ -5,12 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import TreeMenu from "@/components/tree/TreeMenu";
 import "leaflet/dist/leaflet.css";
 
-// Fix for default marker icons in react-leaflet
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-// @ts-ignore
 delete Icon.Default.prototype._getIconUrl;
 Icon.Default.mergeOptions({
   iconUrl: markerIcon,
@@ -18,7 +16,6 @@ Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-// Custom tree icon
 const treeIcon = new Icon({
   iconUrl: 'data:image/svg+xml;base64,' + btoa(`
     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -53,7 +50,6 @@ interface MapViewProps {
   onLocationUpdate?: (lat: number, lng: number) => void;
 }
 
-// Component to handle map centering
 function MapController({ center }: { center: LatLngExpression }) {
   const map = useMap();
 
@@ -70,11 +66,9 @@ const MapView = ({ onLocationUpdate }: MapViewProps) => {
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [trees, setTrees] = useState<Tree[]>([]);
 
-  // Durham, NC default coordinates
   const defaultCenter: [number, number] = [35.9940, -78.8986];
   const mapCenter = userLocation || defaultCenter;
 
-  // Fetch all trees from database
   useEffect(() => {
     const fetchTrees = async () => {
       try {
@@ -94,7 +88,6 @@ const MapView = ({ onLocationUpdate }: MapViewProps) => {
   }, []);
 
   useEffect(() => {
-    // Request user's location
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -137,14 +130,12 @@ const MapView = ({ onLocationUpdate }: MapViewProps) => {
         maxBoundsViscosity={1.0}
         worldCopyJump={false}
       >
-        {/* Map Tiles - OpenStreetMap */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           noWrap={true}
         />
 
-        {/* Tree Markers */}
         {trees.map((tree) => (
           <Marker
             key={tree.id}
@@ -162,7 +153,6 @@ const MapView = ({ onLocationUpdate }: MapViewProps) => {
           </Marker>
         ))}
 
-        {/* User Location Marker and Circle */}
         {userLocation && (
           <>
             <Marker position={userLocation}>
@@ -176,7 +166,6 @@ const MapView = ({ onLocationUpdate }: MapViewProps) => {
               </Popup>
             </Marker>
 
-            {/* Blue circle around user location */}
             <Circle
               center={userLocation}
               radius={100}
@@ -190,11 +179,9 @@ const MapView = ({ onLocationUpdate }: MapViewProps) => {
           </>
         )}
 
-        {/* Center map on user location when it updates */}
         {userLocation && <MapController center={userLocation} />}
       </MapContainer>
 
-      {/* Location Status - positioned below top bar near profile icon */}
       {locationError && !userLocation && (
         <div className="absolute top-20 right-4 z-[999] bg-background border border-border px-3 py-2 rounded-lg shadow-md max-w-xs">
           <p className="text-xs text-muted-foreground">
