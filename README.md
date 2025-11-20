@@ -10,38 +10,11 @@ Urban heat islands are killing newly planted trees in cities across America. Whi
 
 ## What it does
 
-Tamagotree is a gamified tree care platform that turns urban tree maintenance into an engaging community experience. Users can:
-- **Discover and adopt** real trees in their neighborhood through an interactive map
-- **Complete daily quests** (watering, singing, leaf cleanup) with photo verification
-- **Earn rewards** (Acorns, XP, Branch Points) for consistent tree care
-- **Customize trees** with decorations purchased from the shop
-- **Connect with friends** to collaborate on tree care tasks
-- **Track progress** through achievements, levels, and leaderboards
-- **Combat urban heat** by ensuring consistent care for vulnerable new trees
+Tamagotree is a gamified tree care platform that turns urban tree maintenance into an engaging community experience. Users discover and adopt real trees in their neighborhood, complete daily quests with photo verification, earn rewards, customize trees with decorations, connect with friends for collaborative care, and track progress through achievements and leaderboards. See the [Features](#-features) section for complete details.
 
 ## How we built it
 
-We built Tomagotree using a modern full-stack approach with **Claude Code** as our primary development assistant:
-
-**Frontend:**
-- React 18 with TypeScript for type-safe component development
-- Vite for lightning-fast build times and hot module replacement
-- Tailwind CSS + shadcn/ui for beautiful, accessible UI components
-- Leaflet + OpenStreetMap for interactive mapping
-- React Query for efficient data fetching and caching
-
-**Backend:**
-- Supabase as our Backend-as-a-Service platform
-- PostgreSQL with Row Level Security for secure data access
-- Supabase Auth for user authentication
-- Supabase Storage for tree photo uploads
-- Real-time subscriptions for live updates
-
-**Development Workflow:**
-- Claude Code for AI-assisted development, debugging, and feature implementation
-- Supabase MCP Server for direct database operations and migrations
-- Vercel MCP Server for deployment management
-- Git for version control and collaboration
+We built Tamagotree using a modern full-stack approach with React/TypeScript and Supabase. See the [Tech Stack](#-tech-stack) section for complete details.
 
 **Key Technical Decisions:**
 - Percentage-based decoration positioning for responsive layouts
@@ -236,11 +209,6 @@ We built Tomagotree using a modern full-stack approach with **Claude Code** as o
 - **Canvas API** - Browser-based image manipulation
 
 ### Development Tools
-- **[Claude Code](https://claude.com/claude-code)** - AI-powered development assistant
-  - Code generation and refactoring
-  - Feature implementation
-  - Bug fixing and debugging
-  - Documentation writing
 - **[ESLint](https://eslint.org/)** - Code linting
 - **[Prettier](https://prettier.io/)** - Code formatting
 - **[Git](https://git-scm.com/)** - Version control
@@ -364,64 +332,21 @@ See the **[Vercel Deployment Guide](VERCEL_DEPLOYMENT.md)** for complete instruc
 ## Credits & Attribution
 
 ### Development Tools
-
-#### Claude Code
-**[Claude Code by Anthropic](https://claude.com/claude-code)** - The entire Tomagotree application was built with the assistance of Claude Code, an AI-powered development assistant.
-
-#### Loveable
-**[Lovable](https://lovable.dev/)** - Chatbot used to biuld the file structure and begning of front end, an AI-powered development assistant.
-
-### Backend Infrastructure
-
-#### Supabase
-**[Supabase](https://supabase.com/)** - Open-source Firebase alternative providing a PostgreSQL database with Row Level Security.
-
-### Frontend Technologies
-
-#### React & Ecosystem
-- **[React](https://react.dev/)** by Meta - UI library
-- **[React Router](https://reactrouter.com/)** by Remix - Routing solution
-- **[React Query / TanStack Query](https://tanstack.com/query)** by TanStack - Data fetching
-
-#### UI Components & Design
-- **[shadcn/ui](https://ui.shadcn.com/)** by shadcn - Component collection
-- **[Radix UI](https://www.radix-ui.com/)** by WorkOS - Primitive components
-- **[Tailwind CSS](https://tailwindcss.com/)** by Tailwind Labs - Utility CSS
-- **[Lucide Icons](https://lucide.dev/)** - Icon library
-
-#### Build Tools
-- **[Vite](https://vitejs.dev/)** by Evan You & VoidZero - Build tool
-- **[TypeScript](https://www.typescriptlang.org/)** by Microsoft - Type system
-- **[PostCSS](https://postcss.org/)** - CSS transformation
-
-### Maps & Geolocation
-- **[Leaflet](https://leafletjs.com/)** by Vladimir Agafonkin - Map library
-- **[React Leaflet](https://react-leaflet.js.org/)** - React integration
-- **[OpenStreetMap](https://www.openstreetmap.org/)** - Map data and tiles
-- **[OpenStreetMap Contributors](https://www.openstreetmap.org/copyright)** - Community map data
-
-### Image Processing
-- **[Sharp](https://sharp.pixelplumbing.com/)** by Lovell Fuller - High-performance image processing
-
-### Hosting & Deployment
-- **[Vercel](https://vercel.com/)** - Frontend hosting 
-
-### MCP (Model Context Protocol) Servers
-- **[Supabase MCP Server](https://github.com/supabase/mcp-server-supabase)** - Database operations
-- **[Vercel MCP Server](https://github.com/vercel/mcp-server-vercel)** - Deployment management
-
-### Development Tools & Libraries
 - **[ESLint](https://eslint.org/)** - Code linting
 - **[Prettier](https://prettier.io/)** - Code formatting
-- **[Git](https://git-scm.com/)** - Version control
-- **[GitHub](https://github.com/)** - Code hosting
-- **[npm](https://www.npmjs.com/)** - Package management
+- **[Git](https://git-scm.com/)** & **[GitHub](https://github.com/)** - Version control and code hosting
 
-### Additional Libraries
-- **[@supabase/supabase-js](https://github.com/supabase/supabase-js)** - Supabase client
-- **[date-fns](https://date-fns.org/)** - Date utilities
-- **[clsx](https://github.com/lukeed/clsx)** - Conditional classes
-- **[tailwind-merge](https://github.com/dcastil/tailwind-merge)** - Tailwind class merging
+### Core Technologies
+- **[React](https://react.dev/)** by Meta, **[TypeScript](https://www.typescriptlang.org/)** by Microsoft, **[Vite](https://vitejs.dev/)** by Evan You & VoidZero
+- **[Supabase](https://supabase.com/)** - PostgreSQL database with Row Level Security, authentication, and storage
+- **[Vercel](https://vercel.com/)** - Frontend hosting and deployment
+- **[Tailwind CSS](https://tailwindcss.com/)**, **[shadcn/ui](https://ui.shadcn.com/)**, **[Radix UI](https://www.radix-ui.com/)**
+- **[Leaflet](https://leafletjs.com/)**, **[React Leaflet](https://react-leaflet.js.org/)**, **[OpenStreetMap](https://www.openstreetmap.org/)**
+- **[TanStack Query](https://tanstack.com/query)**, **[React Router](https://reactrouter.com/)**, **[Lucide Icons](https://lucide.dev/)**
+- **[Sharp](https://sharp.pixelplumbing.com/)** by Lovell Fuller - High-performance image processing
+
+### MCP (Model Context Protocol) Servers
+- **[Supabase MCP Server](https://github.com/supabase/mcp-server-supabase)** & **[Vercel MCP Server](https://github.com/vercel/mcp-server-vercel)**
 
 ---
 
@@ -441,7 +366,6 @@ For questions, suggestions, or feedback, please open an issue on GitHub.
 
 <div align="center">
 
-[![Claude Code](https://img.shields.io/badge/Built%20with-Claude%20Code-8A2BE2?style=for-the-badge)](https://claude.com/claude-code)
 [![Supabase](https://img.shields.io/badge/Powered%20by-Supabase-3ECF8E?style=for-the-badge)](https://supabase.com)
 [![Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-000000?style=for-the-badge)](https://vercel.com)
 
